@@ -150,7 +150,7 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-# Initializing B/L Session State Keys
+# Initialize Session Keys cleanly
 bl_keys = [
     "booking_no", "shipping_line", "vessel", "pol", "pod", "freight_terms",
     "s_name", "s_addr", "s_tax", "s_tel", "s_email",
@@ -283,7 +283,7 @@ if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
             st.text_area("rfq_output_placeholder", value="Dönüştürülen mesaj burada görünecektir...", height=220, disabled=True, label_visibility="collapsed")
 
 # ---------------------------------------------------------
-# MODULE 2: B/L TALİMAT DÖNÜŞTÜRÜCÜ
+# MODULE 2: B/L TALİMAT DÖNÜŞTÜRÜCÜ (FIXED PARTIES PARSING)
 # ---------------------------------------------------------
 elif selected_tool == "📜 B/L Talimat Dönüştürücü":
     
@@ -306,13 +306,32 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
     def extract_with_ai(text_content):
         client = openai.OpenAI(api_key=OPENAI_API_KEY)
         prompt = f"""
-        You are an expert shipping documentation parser for Awam Logistics.
-        Parse the B/L instruction text and strictly return a JSON object with these EXACT keys:
+        You are an expert shipping documentation parser for Awam Logistics (Freight Forwarder).
+        Parse the B/L instruction text and strictly extract all details including Shipper, Consignee, and Notify Party details.
+        
+        Return ONLY a JSON object with these EXACT keys:
         {{
-            "booking_no": "", "shipping_line": "", "vessel": "", "pol": "", "pod": "", "freight_terms": "FREIGHT PREPAID",
-            "s_name": "", "s_addr": "", "s_tax": "", "s_tel": "", "s_email": "",
-            "cn_name": "", "cn_addr": "", "cn_tax": "", "cn_tel": "", "cn_email": "",
-            "nt_name": "", "nt_addr": "", "nt_tax": "", "nt_tel": "", "nt_email": "",
+            "booking_no": "",
+            "shipping_line": "",
+            "vessel": "",
+            "pol": "",
+            "pod": "",
+            "freight_terms": "FREIGHT PREPAID",
+            "s_name": "Full Shipper Company Name",
+            "s_addr": "Full Shipper Address",
+            "s_tax": "Shipper Tax/CR Number",
+            "s_tel": "Shipper Telephone",
+            "s_email": "Shipper Email",
+            "cn_name": "Full Consignee Company Name",
+            "cn_addr": "Full Consignee Address",
+            "cn_tax": "Consignee Tax/CR/EORI Number",
+            "cn_tel": "Consignee Telephone",
+            "cn_email": "Consignee Email",
+            "nt_name": "Full Notify Party Name",
+            "nt_addr": "Full Notify Party Address",
+            "nt_tax": "Notify Tax/CR Number",
+            "nt_tel": "Notify Telephone",
+            "nt_email": "Notify Email",
             "containers": [
                 {{"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}}
             ]
@@ -332,11 +351,12 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
     
     if st.button("🚀 AI ile Oku ve Doldur", type="primary"):
         if uploaded_file is not None:
-            with st.spinner("İşleniyor..."):
+            with st.spinner("Doküman Analiz Ediliyor ve Partiler Ayrıştırılıyor..."):
                 try:
                     text_content = read_docx_file(uploaded_file)
                     res = extract_with_ai(text_content)
                     
+                    # Direct session state assignment for all keys
                     for k in bl_keys:
                         if k in res and res[k]:
                             st.session_state[k] = str(res[k])
@@ -344,47 +364,51 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
                     if "containers" in res and res["containers"]:
                         st.session_state.containers = pd.DataFrame(res["containers"])
                         
-                    st.success("✅ Tüm Bilgiler Başarıyla Ayrıştırıldı!")
+                    st.success("✅ Shipper, Consignee, Notify ve Yük Bilgileri Eksiksiz Okundu!")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Hata: {str(e)}")
+                    st.error(f"Hata Oluştu: {str(e)}")
 
     st.subheader("📋 Genel Sevkiyat Bilgileri")
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.session_state["booking_no"] = st.text_input("Booking No", value=st.session_state["booking_no"])
-        st.session_state["shipping_line"] = st.text_input("Shipping Line", value=st.session_state["shipping_line"])
+        st.session_state["booking_no"] = st.text_input("Booking No", value=st.session_state.get("booking_no", ""))
+        st.session_state["shipping_line"] = st.text_input("Shipping Line", value=st.session_state.get("shipping_line", ""))
     with col2:
-        st.session_state["vessel"] = st.text_input("Vessel & Voyage", value=st.session_state["vessel"])
-        st.session_state["freight_terms"] = st.text_input("Freight Terms", value=st.session_state["freight_terms"])
+        st.session_state["vessel"] = st.text_input("Vessel & Voyage", value=st.session_state.get("vessel", ""))
+        st.session_state["freight_terms"] = st.text_input("Freight Terms", value=st.session_state.get("freight_terms", "FREIGHT PREPAID"))
     with col3:
-        st.session_state["pol"] = st.text_input("POL (Port of Loading)", value=st.session_state["pol"])
-        st.session_state["pod"] = st.text_input("POD (Port of Discharge)", value=st.session_state["pod"])
+        st.session_state["pol"] = st.text_input("POL (Port of Loading)", value=st.session_state.get("pol", ""))
+        st.session_state["pod"] = st.text_input("POD (Port of Discharge)", value=st.session_state.get("pod", ""))
 
     st.subheader("👥 Partiler (Shipper / Consignee / Notify)")
+    
+    # Shipper Row
     st.markdown("**1. SHIPPER / YÜKLEYİCİ**")
     c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
-    with c1: st.session_state["s_name"] = st.text_input("COMPANY NAME", value=st.session_state["s_name"], key="input_s_name")
-    with c2: st.session_state["s_addr"] = st.text_input("ADDRESS", value=st.session_state["s_addr"], key="input_s_addr")
-    with c3: st.session_state["s_tax"] = st.text_input("TAX NUMBER", value=st.session_state["s_tax"], key="input_s_tax")
-    with c4: st.session_state["s_tel"] = st.text_input("TEL", value=st.session_state["s_tel"], key="input_s_tel")
-    with c5: st.session_state["s_email"] = st.text_input("EMAIL", value=st.session_state["s_email"], key="input_s_email")
+    with c1: st.session_state["s_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("s_name", ""), key="k_s_name")
+    with c2: st.session_state["s_addr"] = st.text_input("ADDRESS", value=st.session_state.get("s_addr", ""), key="k_s_addr")
+    with c3: st.session_state["s_tax"] = st.text_input("TAX NUMBER", value=st.session_state.get("s_tax", ""), key="k_s_tax")
+    with c4: st.session_state["s_tel"] = st.text_input("TEL", value=st.session_state.get("s_tel", ""), key="k_s_tel")
+    with c5: st.session_state["s_email"] = st.text_input("EMAIL", value=st.session_state.get("s_email", ""), key="k_s_email")
 
+    # Consignee Row
     st.markdown("**2. CONSIGNEE / ALICI**")
     c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
-    with c1: st.session_state["cn_name"] = st.text_input("COMPANY NAME", value=st.session_state["cn_name"], key="input_cn_name")
-    with c2: st.session_state["cn_addr"] = st.text_input("ADDRESS", value=st.session_state["cn_addr"], key="input_cn_addr")
-    with c3: st.session_state["cn_tax"] = st.text_input("TAX NUMBER", value=st.session_state["cn_tax"], key="input_cn_tax")
-    with c4: st.session_state["cn_tel"] = st.text_input("TEL", value=st.session_state["cn_tel"], key="input_cn_tel")
-    with c5: st.session_state["cn_email"] = st.text_input("EMAIL", value=st.session_state["cn_email"], key="input_cn_email")
+    with c1: st.session_state["cn_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("cn_name", ""), key="k_cn_name")
+    with c2: st.session_state["cn_addr"] = st.text_input("ADDRESS", value=st.session_state.get("cn_addr", ""), key="k_cn_addr")
+    with c3: st.session_state["cn_tax"] = st.text_input("TAX NUMBER", value=st.session_state.get("cn_tax", ""), key="k_cn_tax")
+    with c4: st.session_state["cn_tel"] = st.text_input("TEL", value=st.session_state.get("cn_tel", ""), key="k_cn_tel")
+    with c5: st.session_state["cn_email"] = st.text_input("EMAIL", value=st.session_state.get("cn_email", ""), key="k_cn_email")
 
+    # Notify Row
     st.markdown("**3. NOTIFY / İHBAR TARAF**")
     c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
-    with c1: st.session_state["nt_name"] = st.text_input("COMPANY NAME", value=st.session_state["nt_name"], key="input_nt_name")
-    with c2: st.session_state["nt_addr"] = st.text_input("ADDRESS", value=st.session_state["nt_addr"], key="input_nt_addr")
-    with c3: st.session_state["nt_tax"] = st.text_input("TAX NUMBER", value=st.session_state["nt_tax"], key="input_nt_tax")
-    with c4: st.session_state["nt_tel"] = st.text_input("TEL", value=st.session_state["nt_tel"], key="input_nt_tel")
-    with c5: st.session_state["nt_email"] = st.text_input("EMAIL", value=st.session_state["nt_email"], key="input_nt_email")
+    with c1: st.session_state["nt_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("nt_name", ""), key="k_nt_name")
+    with c2: st.session_state["nt_addr"] = st.text_input("ADDRESS", value=st.session_state.get("nt_addr", ""), key="k_nt_addr")
+    with c3: st.session_state["nt_tax"] = st.text_input("TAX NUMBER", value=st.session_state.get("nt_tax", ""), key="k_nt_tax")
+    with c4: st.session_state["nt_tel"] = st.text_input("TEL", value=st.session_state.get("nt_tel", ""), key="k_nt_tel")
+    with c5: st.session_state["nt_email"] = st.text_input("EMAIL", value=st.session_state.get("nt_email", ""), key="k_nt_email")
 
     st.subheader("📦 Konteyner ve Yük Detayları")
     edited_df = st.data_editor(st.session_state.containers, num_rows="dynamic", use_container_width=True)
