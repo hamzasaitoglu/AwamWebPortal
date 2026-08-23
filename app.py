@@ -128,7 +128,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Sidebar UI Construction
+# Sidebar Navigation
 with st.sidebar:
     st.markdown("""
     <div class='brand-box'>
@@ -172,6 +172,9 @@ if "containers" not in st.session_state:
         {"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}
     ])
 
+if "widget_version" not in st.session_state:
+    st.session_state.widget_version = 0
+
 def reset_all_fields():
     for k in bl_keys:
         st.session_state[k] = ""
@@ -179,6 +182,7 @@ def reset_all_fields():
     st.session_state.containers = pd.DataFrame([
         {"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}
     ])
+    st.session_state.widget_version += 1
 
 # ---------------------------------------------------------
 # MODULE 1: SATIŞ - HIZLI FİYATLANDIRMA TALEP DÖNÜŞTÜRÜCÜ
@@ -248,7 +252,7 @@ if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
             st.text_area("rfq_output_placeholder", value="Dönüştürülen mesaj burada görünecektir...", height=220, disabled=True, label_visibility="collapsed")
 
 # ---------------------------------------------------------
-# MODULE 2: B/L TALİMAT DÖNÜŞTÜRÜCÜ (UNIQUE KEYS FIXED)
+# MODULE 2: B/L TALİMAT DÖNÜŞTÜRÜCÜ (DYNAMIC SYNC FIXED)
 # ---------------------------------------------------------
 elif selected_tool == "📜 B/L Talimat Dönüştürücü":
     
@@ -307,7 +311,7 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
 
     if process_doc_btn:
         if uploaded_file is not None:
-            with st.spinner("Doküman Derinlemesine Analiz Ediliyor..."):
+            with st.spinner("Doküman Analiz Ediliyor ve Ekrana Yansıtılıyor..."):
                 try:
                     text_content = read_docx_file(uploaded_file)
                     res = extract_with_ai(text_content)
@@ -318,7 +322,10 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
                     
                     if "containers" in res and res["containers"]:
                         st.session_state.containers = pd.DataFrame(res["containers"])
-                        
+                    
+                    # Force Streamlit to invalidate old Widget cache by incrementing version
+                    st.session_state.widget_version += 1
+                    
                     st.success("✅ Tüm Bilgiler Ekran ve Excel İçin Başarıyla Senkronize Edildi!")
                     st.rerun()
                 except Exception as e:
@@ -326,49 +333,51 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
         else:
             st.warning("Lütfen önce bir dosya yükleyin.")
 
+    v = st.session_state.widget_version
+
     st.subheader("📋 Genel Sevkiyat Bilgileri")
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.session_state["booking_no"] = st.text_input("Booking No", value=st.session_state.get("booking_no", ""), key="gen_booking_no")
-        st.session_state["shipping_line"] = st.text_input("Shipping Line", value=st.session_state.get("shipping_line", ""), key="gen_shipping_line")
+        st.session_state["booking_no"] = st.text_input("Booking No", value=st.session_state.get("booking_no", ""), key=f"bk_{v}")
+        st.session_state["shipping_line"] = st.text_input("Shipping Line", value=st.session_state.get("shipping_line", ""), key="sl_{v}")
     with col2:
-        st.session_state["vessel"] = st.text_input("Vessel & Voyage", value=st.session_state.get("vessel", ""), key="gen_vessel")
-        st.session_state["freight_terms"] = st.text_input("Freight Terms", value=st.session_state.get("freight_terms", "FREIGHT PREPAID"), key="gen_freight_terms")
+        st.session_state["vessel"] = st.text_input("Vessel & Voyage", value=st.session_state.get("vessel", ""), key=f"vs_{v}")
+        st.session_state["freight_terms"] = st.text_input("Freight Terms", value=st.session_state.get("freight_terms", "FREIGHT PREPAID"), key=f"ft_{v}")
     with col3:
-        st.session_state["pol"] = st.text_input("POL (Port of Loading)", value=st.session_state.get("pol", ""), key="gen_pol")
-        st.session_state["pod"] = st.text_input("POD (Port of Discharge)", value=st.session_state.get("pod", ""), key="gen_pod")
+        st.session_state["pol"] = st.text_input("POL (Port of Loading)", value=st.session_state.get("pol", ""), key=f"pol_{v}")
+        st.session_state["pod"] = st.text_input("POD (Port of Discharge)", value=st.session_state.get("pod", ""), key=f"pod_{v}")
 
     st.subheader("👥 Partiler (Shipper / Consignee / Notify)")
     
     # Shipper Row
     st.markdown("**1. SHIPPER / YÜKLEYİCİ**")
     c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
-    with c1: st.session_state["s_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("s_name", ""), key="shipper_name_key")
-    with c2: st.session_state["s_addr"] = st.text_input("ADDRESS", value=st.session_state.get("s_addr", ""), key="shipper_addr_key")
-    with c3: st.session_state["s_tax"] = st.text_input("TAX NUMBER", value=st.session_state.get("s_tax", ""), key="shipper_tax_key")
-    with c4: st.session_state["s_tel"] = st.text_input("TEL", value=st.session_state.get("s_tel", ""), key="shipper_tel_key")
-    with c5: st.session_state["s_email"] = st.text_input("EMAIL", value=st.session_state.get("s_email", ""), key="shipper_email_key")
+    with c1: st.session_state["s_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("s_name", ""), key=f"sn_{v}")
+    with c2: st.session_state["s_addr"] = st.text_input("ADDRESS", value=st.session_state.get("s_addr", ""), key=f"sa_{v}")
+    with c3: st.session_state["s_tax"] = st.text_input("TAX NUMBER", value=st.session_state.get("s_tax", ""), key=f"st_{v}")
+    with c4: st.session_state["s_tel"] = st.text_input("TEL", value=st.session_state.get("s_tel", ""), key=f"stp_{v}")
+    with c5: st.session_state["s_email"] = st.text_input("EMAIL", value=st.session_state.get("s_email", ""), key=f"se_{v}")
 
     # Consignee Row
     st.markdown("**2. CONSIGNEE / ALICI**")
     c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
-    with c1: st.session_state["cn_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("cn_name", ""), key="consignee_name_key")
-    with c2: st.session_state["cn_addr"] = st.text_input("ADDRESS", value=st.session_state.get("cn_addr", ""), key="consignee_addr_key")
-    with c3: st.session_state["cn_tax"] = st.text_input("TAX NUMBER", value=st.session_state.get("cn_tax", ""), key="consignee_tax_key")
-    with c4: st.session_state["cn_tel"] = st.text_input("TEL", value=st.session_state.get("cn_tel", ""), key="consignee_tel_key")
-    with c5: st.session_state["cn_email"] = st.text_input("EMAIL", value=st.session_state.get("cn_email", ""), key="consignee_email_key")
+    with c1: st.session_state["cn_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("cn_name", ""), key=f"cnn_{v}")
+    with c2: st.session_state["cn_addr"] = st.text_input("ADDRESS", value=st.session_state.get("cn_addr", ""), key=f"cna_{v}")
+    with c3: st.session_state["cn_tax"] = st.text_input("TAX NUMBER", value=st.session_state.get("cn_tax", ""), key=f"cnt_{v}")
+    with c4: st.session_state["cn_tel"] = st.text_input("TEL", value=st.session_state.get("cn_tel", ""), key=f"cntp_{v}")
+    with c5: st.session_state["cn_email"] = st.text_input("EMAIL", value=st.session_state.get("cn_email", ""), key=f"cne_{v}")
 
     # Notify Row
     st.markdown("**3. NOTIFY / İHBAR TARAF**")
     c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
-    with c1: st.session_state["nt_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("nt_name", ""), key="notify_name_key")
-    with c2: st.session_state["nt_addr"] = st.text_input("ADDRESS", value=st.session_state.get("nt_addr", ""), key="notify_addr_key")
-    with c3: st.session_state["nt_tax"] = st.text_input("TAX NUMBER", value=st.session_state.get("nt_tax", ""), key="notify_tax_key")
-    with c4: st.session_state["nt_tel"] = st.text_input("TEL", value=st.session_state.get("nt_tel", ""), key="notify_tel_key")
-    with c5: st.session_state["nt_email"] = st.text_input("EMAIL", value=st.session_state.get("nt_email", ""), key="notify_email_key")
+    with c1: st.session_state["nt_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("nt_name", ""), key=f"ntn_{v}")
+    with c2: st.session_state["nt_addr"] = st.text_input("ADDRESS", value=st.session_state.get("nt_addr", ""), key=f"nta_{v}")
+    with c3: st.session_state["nt_tax"] = st.text_input("TAX NUMBER", value=st.session_state.get("nt_tax", ""), key=f"ntt_{v}")
+    with c4: st.session_state["nt_tel"] = st.text_input("TEL", value=st.session_state.get("nt_tel", ""), key=f"nttp_{v}")
+    with c5: st.session_state["nt_email"] = st.text_input("EMAIL", value=st.session_state.get("nt_email", ""), key=f"nte_{v}")
 
     st.subheader("📦 Konteyner ve Yük Detayları")
-    edited_df = st.data_editor(st.session_state.containers, num_rows="dynamic", use_container_width=True)
+    edited_df = st.data_editor(st.session_state.containers, num_rows="dynamic", use_container_width=True, key=f"de_{v}")
 
     total_containers = len(edited_df[edited_df["Container No"].astype(str).str.strip() != ""])
     
