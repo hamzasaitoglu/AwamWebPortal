@@ -28,7 +28,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize Session State Keys
+# Initialize Session State Keys directly
 keys_to_init = [
     "booking_no", "shipping_line", "vessel", "pol", "pod", "freight_terms",
     "s_name", "s_addr", "s_tax", "s_tel", "s_email",
@@ -81,14 +81,10 @@ def extract_with_ai(text_content, api_key):
     """
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}]
+        messages=[{"role": "user", "content": prompt}],
+        response_format={"type": "json_object"}
     )
-    raw_res = response.choices[0].message.content.strip()
-    if raw_res.startswith("```"):
-        parts = raw_res.split("```")
-        if len(parts) > 1:
-            raw_res = parts[1].replace("json", "").strip()
-    return json.loads(raw_res)
+    return json.loads(response.choices[0].message.content.strip())
 
 def reset_all():
     for k in keys_to_init:
@@ -98,7 +94,7 @@ def reset_all():
         {"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}
     ])
 
-# Sidebar Menu
+# Sidebar
 st.sidebar.title("AWAM LOGISTICS")
 st.sidebar.caption("Operasyonel Portal")
 selected_tool = st.sidebar.radio(
@@ -151,6 +147,7 @@ if selected_tool == "📜 B/L Talimat Dönüştürücü":
         st.text_input("Vessel & Voyage", key="vessel")
         st.text_input("Freight Terms", key="freight_terms")
     with col3:
+        # Reversed order: POL on TOP, POD on BOTTOM
         st.text_input("POL (Port of Loading)", key="pol")
         st.text_input("POD (Port of Discharge)", key="pod")
 
