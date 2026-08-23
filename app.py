@@ -28,7 +28,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize Session State Keys directly
+# Initialize Session State Keys
 keys_to_init = [
     "booking_no", "shipping_line", "vessel", "pol", "pod", "freight_terms",
     "s_name", "s_addr", "s_tax", "s_tel", "s_email",
@@ -94,7 +94,7 @@ def reset_all():
         {"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}
     ])
 
-# Sidebar
+# Sidebar Menu
 st.sidebar.title("AWAM LOGISTICS")
 st.sidebar.caption("Operasyonel Portal")
 selected_tool = st.sidebar.radio(
@@ -147,7 +147,6 @@ if selected_tool == "📜 B/L Talimat Dönüştürücü":
         st.text_input("Vessel & Voyage", key="vessel")
         st.text_input("Freight Terms", key="freight_terms")
     with col3:
-        # Reversed order: POL on TOP, POD on BOTTOM
         st.text_input("POL (Port of Loading)", key="pol")
         st.text_input("POD (Port of Discharge)", key="pod")
 
@@ -204,7 +203,6 @@ if selected_tool == "📜 B/L Talimat Dönüştürücü":
     st.subheader("📦 Konteyner ve Yük Detayları")
     edited_df = st.data_editor(st.session_state.containers, num_rows="dynamic", use_container_width=True)
 
-    # Dynamic Totals Calculation
     total_containers = len(edited_df[edited_df["Container No"].astype(str).str.strip() != ""])
     
     pkg_sum_str = ""
@@ -251,7 +249,7 @@ if selected_tool == "📜 B/L Talimat Dönüştürücü":
         ws.row_dimensions[1].height = 32
 
         ws.merge_cells("A2:G2")
-        ws["A2"] = "Official Shipping Instruction Document | [www.awamlogistics.com](https://www.awamlogistics.com)"
+        ws["A2"] = "Official Shipping Instruction Document | www.awamlogistics.com"
         ws["A2"].font = Font(name="Calibri", size=10, italic=True, color="FFFFFF")
         ws["A2"].fill = BLUE_FILL
         ws["A2"].alignment = Alignment(horizontal="center", vertical="center")
