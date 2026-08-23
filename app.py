@@ -212,18 +212,40 @@ if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
             process_btn = st.button("⚡ Hızlı Çevir", use_container_width=True)
 
     if process_btn and raw_text.strip():
-        with st.spinner("AI Tarafından Dönüştürülüyor..."):
+        with st.spinner("AI Tarafından İngilizceye ve Standart Formata Dönüştürülüyor..."):
             try:
                 client = openai.OpenAI(api_key=OPENAI_API_KEY)
                 prompt = f"""
                 You are an expert Freight Forwarding speed-parser for Awam Logistics.
-                Convert raw text into 4-line format:
-                [POL] [POD]
-                [QTY]X[TYPE]
-                [CLIENT NAME]
-                [REF CODE]
-                Append Ref Code: {custom_ref}
-                Raw Text: {raw_text}
+                Convert the raw inquiry text into a STRICT 4-LINE ENGLISH MESSAGE.
+                DO NOT INCLUDE BRACKETS LIKE [POL], [POD], [QTY], OR LABELS. OUTPUT ONLY THE VALUES IN UPPERCASE.
+
+                REQUIRED 4-LINE FORMAT (ONLY VALUES, NO LABELS/BRACKETS):
+                LINE 1: POL_NAME POD_NAME (Translated to standard English shipping names, e.g. IZMIR HODEIDAH)
+                LINE 2: QTYxCONTAINER_TYPE (Standardized e.g. 20X40 RF, 1X40 HC, 2X20 GP)
+                LINE 3: CLIENT_NAME (Translated/Transliterated to UPPERCASE ENGLISH, e.g. AZIZ QATAM)
+                LINE 4: REF_CODE (Exact value provided below)
+
+                Port Dictionary Translation Rules:
+                - ازمير / إزمير -> IZMIR
+                - الحديده / الحديدة -> HODEIDAH
+                - مرسين -> MERSIN
+                - عدن -> ADEN
+                - بورسودان -> PORT SUDAN
+                - مصراتة -> MISURATA
+                - جبل علي -> JEBEL ALI
+                - أمبارلي -> AMBARLI
+                - جدة -> JEDDAH
+
+                Container Type Rules:
+                - حاويه اربعين مبرده / حاوية 40 مبردة -> 40 RF
+                - حاويه اربعين / حاوية 40 -> 40 HC
+                - حاويه عشرين / حاوية 20 -> 20 GP
+
+                Exact Reference Code for Line 4: {custom_ref}
+
+                Raw Text Input:
+                {raw_text}
                 """
                 response = client.chat.completions.create(
                     model="gpt-4o-mini",
@@ -252,7 +274,7 @@ if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
             st.text_area("rfq_output_placeholder", value="Dönüştürülen mesaj burada görünecektir...", height=220, disabled=True, label_visibility="collapsed")
 
 # ---------------------------------------------------------
-# MODULE 2: B/L TALİMAT DÖNÜŞTÜRÜCÜ (DYNAMIC SYNC FIXED)
+# MODULE 2: B/L TALİMAT DÖNÜŞTÜRÜCÜ
 # ---------------------------------------------------------
 elif selected_tool == "📜 B/L Talimat Dönüştürücü":
     
@@ -323,7 +345,6 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
                     if "containers" in res and res["containers"]:
                         st.session_state.containers = pd.DataFrame(res["containers"])
                     
-                    # Force Streamlit to invalidate old Widget cache by incrementing version
                     st.session_state.widget_version += 1
                     
                     st.success("✅ Tüm Bilgiler Ekran ve Excel İçin Başarıyla Senkronize Edildi!")
@@ -339,7 +360,7 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
     col1, col2, col3 = st.columns(3)
     with col1:
         st.session_state["booking_no"] = st.text_input("Booking No", value=st.session_state.get("booking_no", ""), key=f"bk_{v}")
-        st.session_state["shipping_line"] = st.text_input("Shipping Line", value=st.session_state.get("shipping_line", ""), key="sl_{v}")
+        st.session_state["shipping_line"] = st.text_input("Shipping Line", value=st.session_state.get("shipping_line", ""), key=f"sl_{v}")
     with col2:
         st.session_state["vessel"] = st.text_input("Vessel & Voyage", value=st.session_state.get("vessel", ""), key=f"vs_{v}")
         st.session_state["freight_terms"] = st.text_input("Freight Terms", value=st.session_state.get("freight_terms", "FREIGHT PREPAID"), key=f"ft_{v}")
