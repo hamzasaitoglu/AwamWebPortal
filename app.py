@@ -14,13 +14,11 @@ OPENAI_API_KEY = k1 + k2
 
 st.set_page_config(page_title="Awam Logistics - Operasyonel Portal", page_icon="🚢", layout="wide")
 
-# Enterprise UI Stylesheet
+# Executive Dark UI Stylesheet (Awam Standard)
 st.markdown("""
 <style>
-    /* Global Page Styling */
     .stApp { background-color: #0F172A; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
     
-    /* Sidebar Styling */
     [data-testid="stSidebar"] {
         background-color: #1E293B !important;
         border-right: 1px solid #334155 !important;
@@ -38,11 +36,8 @@ st.markdown("""
     .brand-title { font-size: 20px; font-weight: 900; color: #FFFFFF; letter-spacing: 0.5px; margin: 0; }
     .brand-sub { font-size: 11px; color: #93C5FD; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
-    /* Custom Navigation Cards */
     .stRadio > label { display: none !important; }
-    .stRadio div[role="radiogroup"] {
-        gap: 12px !important;
-    }
+    .stRadio div[role="radiogroup"] { gap: 12px !important; }
     .stRadio div[role="radiogroup"] > label {
         background: #0F172A !important;
         border: 1px solid #334155 !important;
@@ -68,7 +63,6 @@ st.markdown("""
         box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
     }
 
-    /* Main Container Banner */
     .awam-header {
         background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
         border: 1px solid #334155;
@@ -82,7 +76,6 @@ st.markdown("""
 
     .card-label { font-size: 15px; font-weight: 700; color: #38BDF8; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 
-    /* Text Inputs */
     .stTextArea textarea {
         background-color: #0F172A !important;
         color: #F8FAFC !important;
@@ -100,7 +93,6 @@ st.markdown("""
         font-size: 14px !important;
     }
 
-    /* Buttons */
     .stButton>button {
         background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
         color: #FFFFFF !important;
@@ -117,7 +109,6 @@ st.markdown("""
         box-shadow: 0 6px 16px rgba(37, 99, 235, 0.5) !important;
     }
 
-    /* System Status Footer in Sidebar */
     .sys-status {
         background: #0F172A;
         border: 1px solid #1E293B;
@@ -159,6 +150,25 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
+# Initializing B/L Session State Keys
+bl_keys = [
+    "booking_no", "shipping_line", "vessel", "pol", "pod", "freight_terms",
+    "s_name", "s_addr", "s_tax", "s_tel", "s_email",
+    "cn_name", "cn_addr", "cn_tax", "cn_tel", "cn_email",
+    "nt_name", "nt_addr", "nt_tax", "nt_tel", "nt_email"
+]
+for k in bl_keys:
+    if k not in st.session_state:
+        st.session_state[k] = ""
+
+if "freight_terms" not in st.session_state or not st.session_state["freight_terms"]:
+    st.session_state["freight_terms"] = "FREIGHT PREPAID"
+
+if "containers" not in st.session_state:
+    st.session_state.containers = pd.DataFrame([
+        {"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}
+    ])
+
 # ---------------------------------------------------------
 # MODULE 1: SATIŞ - HIZLI FİYATLANDIRMA TALEP DÖNÜŞTÜRÜCÜ
 # ---------------------------------------------------------
@@ -167,7 +177,7 @@ if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
     st.markdown("""
     <div class='awam-header'>
         <div class='awam-title'>⚡ Satış Hızlı Talep Standardizasyon Aracı (Awam Quick RFQ)</div>
-        <div class='awam-subtitle'>Müşترiden gelen ham mesajları 4 satırlık UN/LOCODE standart fiyatlandırma formatına dönüştürün.</div>
+        <div class='awam-subtitle'>Müşteriden gelen ham mesajları 4 satırlık UN/LOCODE standart fiyatlandırma formatına dönüştürün.</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -283,41 +293,30 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
         <div class='awam-subtitle'>Word/PDF talimatlarını yapay zeka ile okuyun, eksiklikleri kontrol edin ve Awam Excel formatında indirin.</div>
     </div>
     """, unsafe_allow_html=True)
-    
-    keys_to_init = [
-        "booking_no", "shipping_line", "vessel", "pol", "pod", "freight_terms",
-        "s_name", "s_addr", "s_tax", "s_tel", "s_email",
-        "cn_name", "cn_addr", "cn_tax", "cn_tel", "cn_email",
-        "nt_name", "nt_addr", "nt_tax", "nt_tel", "nt_email"
-    ]
-    for k in keys_to_init:
-        if k not in st.session_state: st.session_state[k] = ""
-
-    if "freight_terms" not in st.session_state or not st.session_state["freight_terms"]:
-        st.session_state["freight_terms"] = "FREIGHT PREPAID"
-
-    if "containers" not in st.session_state:
-        st.session_state.containers = pd.DataFrame([
-            {"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}
-        ])
 
     def read_docx_file(file):
         doc = docx.Document(file)
-        full_text = []
-        for p in doc.paragraphs:
-            if p.text.strip(): full_text.append(p.text.strip())
+        full_text = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
         for table in doc.tables:
             for row in table.rows:
                 row_cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
                 if row_cells: full_text.append(" | ".join(row_cells))
         return "\n".join(full_text)
 
-    def extract_with_ai(text_content, api_key):
-        client = openai.OpenAI(api_key=api_key)
+    def extract_with_ai(text_content):
+        client = openai.OpenAI(api_key=OPENAI_API_KEY)
         prompt = f"""
         You are an expert shipping documentation parser for Awam Logistics.
-        Parse the B/L instruction text and split party details into company name, address, tax_id, tel, email.
-        Return ONLY a raw JSON object.
+        Parse the B/L instruction text and strictly return a JSON object with these EXACT keys:
+        {{
+            "booking_no": "", "shipping_line": "", "vessel": "", "pol": "", "pod": "", "freight_terms": "FREIGHT PREPAID",
+            "s_name": "", "s_addr": "", "s_tax": "", "s_tel": "", "s_email": "",
+            "cn_name": "", "cn_addr": "", "cn_tax": "", "cn_tel": "", "cn_email": "",
+            "nt_name": "", "nt_addr": "", "nt_tax": "", "nt_tel": "", "nt_email": "",
+            "containers": [
+                {{"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}}
+            ]
+        }}
 
         Document Text:
         {text_content}
@@ -336,12 +335,16 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
             with st.spinner("İşleniyor..."):
                 try:
                     text_content = read_docx_file(uploaded_file)
-                    res = extract_with_ai(text_content, OPENAI_API_KEY)
-                    for k in keys_to_init:
-                        if k in res and res[k]: st.session_state[k] = str(res[k])
+                    res = extract_with_ai(text_content)
+                    
+                    for k in bl_keys:
+                        if k in res and res[k]:
+                            st.session_state[k] = str(res[k])
+                    
                     if "containers" in res and res["containers"]:
                         st.session_state.containers = pd.DataFrame(res["containers"])
-                    st.success("✅ Ayrıştırıldı!")
+                        
+                    st.success("✅ Tüm Bilgiler Başarıyla Ayrıştırıldı!")
                     st.rerun()
                 except Exception as e:
                     st.error(f"Hata: {str(e)}")
@@ -349,39 +352,39 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
     st.subheader("📋 Genel Sevkiyat Bilgileri")
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.text_input("Booking No", key="booking_no")
-        st.text_input("Shipping Line", key="shipping_line")
+        st.session_state["booking_no"] = st.text_input("Booking No", value=st.session_state["booking_no"])
+        st.session_state["shipping_line"] = st.text_input("Shipping Line", value=st.session_state["shipping_line"])
     with col2:
-        st.text_input("Vessel & Voyage", key="vessel")
-        st.text_input("Freight Terms", key="freight_terms")
+        st.session_state["vessel"] = st.text_input("Vessel & Voyage", value=st.session_state["vessel"])
+        st.session_state["freight_terms"] = st.text_input("Freight Terms", value=st.session_state["freight_terms"])
     with col3:
-        st.text_input("POL (Port of Loading)", key="pol")
-        st.text_input("POD (Port of Discharge)", key="pod")
+        st.session_state["pol"] = st.text_input("POL (Port of Loading)", value=st.session_state["pol"])
+        st.session_state["pod"] = st.text_input("POD (Port of Discharge)", value=st.session_state["pod"])
 
     st.subheader("👥 Partiler (Shipper / Consignee / Notify)")
     st.markdown("**1. SHIPPER / YÜKLEYİCİ**")
     c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
-    with c1: st.text_input("COMPANY NAME", key="s_name")
-    with c2: st.text_input("ADDRESS", key="s_addr")
-    with c3: st.text_input("TAX NUMBER", key="s_tax")
-    with c4: st.text_input("TEL", key="s_tel")
-    with c5: st.text_input("EMAIL", key="s_email")
+    with c1: st.session_state["s_name"] = st.text_input("COMPANY NAME", value=st.session_state["s_name"], key="input_s_name")
+    with c2: st.session_state["s_addr"] = st.text_input("ADDRESS", value=st.session_state["s_addr"], key="input_s_addr")
+    with c3: st.session_state["s_tax"] = st.text_input("TAX NUMBER", value=st.session_state["s_tax"], key="input_s_tax")
+    with c4: st.session_state["s_tel"] = st.text_input("TEL", value=st.session_state["s_tel"], key="input_s_tel")
+    with c5: st.session_state["s_email"] = st.text_input("EMAIL", value=st.session_state["s_email"], key="input_s_email")
 
     st.markdown("**2. CONSIGNEE / ALICI**")
     c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
-    with c1: st.text_input("COMPANY NAME", key="cn_name")
-    with c2: st.text_input("ADDRESS", key="cn_addr")
-    with c3: st.text_input("TAX NUMBER", key="cn_tax")
-    with c4: st.text_input("TEL", key="cn_tel")
-    with c5: st.text_input("EMAIL", key="cn_email")
+    with c1: st.session_state["cn_name"] = st.text_input("COMPANY NAME", value=st.session_state["cn_name"], key="input_cn_name")
+    with c2: st.session_state["cn_addr"] = st.text_input("ADDRESS", value=st.session_state["cn_addr"], key="input_cn_addr")
+    with c3: st.session_state["cn_tax"] = st.text_input("TAX NUMBER", value=st.session_state["cn_tax"], key="input_cn_tax")
+    with c4: st.session_state["cn_tel"] = st.text_input("TEL", value=st.session_state["cn_tel"], key="input_cn_tel")
+    with c5: st.session_state["cn_email"] = st.text_input("EMAIL", value=st.session_state["cn_email"], key="input_cn_email")
 
     st.markdown("**3. NOTIFY / İHBAR TARAF**")
     c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
-    with c1: st.text_input("COMPANY NAME", key="nt_name")
-    with c2: st.text_input("ADDRESS", key="nt_addr")
-    with c3: st.text_input("TAX NUMBER", key="nt_tax")
-    with c4: st.text_input("TEL", key="nt_tel")
-    with c5: st.text_input("EMAIL", key="nt_email")
+    with c1: st.session_state["nt_name"] = st.text_input("COMPANY NAME", value=st.session_state["nt_name"], key="input_nt_name")
+    with c2: st.session_state["nt_addr"] = st.text_input("ADDRESS", value=st.session_state["nt_addr"], key="input_nt_addr")
+    with c3: st.session_state["nt_tax"] = st.text_input("TAX NUMBER", value=st.session_state["nt_tax"], key="input_nt_tax")
+    with c4: st.session_state["nt_tel"] = st.text_input("TEL", value=st.session_state["nt_tel"], key="input_nt_tel")
+    with c5: st.session_state["nt_email"] = st.text_input("EMAIL", value=st.session_state["nt_email"], key="input_nt_email")
 
     st.subheader("📦 Konteyner ve Yük Detayları")
     edited_df = st.data_editor(st.session_state.containers, num_rows="dynamic", use_container_width=True)
