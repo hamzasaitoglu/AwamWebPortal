@@ -17,10 +17,10 @@ OPENAI_API_KEY = k1 + k2
 
 st.set_page_config(page_title="Awam Logistics - Operasyonel Portal", page_icon="🚢", layout="wide")
 
-# High-Contrast Stylesheet for Perfect Visibility
+# High-Contrast Executive Stylesheet (File Uploader Fix Included)
 st.markdown("""
 <style>
-    /* Global Background */
+    /* Global Page Styling */
     .stApp { background-color: #0F172A !important; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
     
     /* Sidebar Styling */
@@ -41,23 +41,35 @@ st.markdown("""
     .brand-title { font-size: 20px; font-weight: 900; color: #FFFFFF !important; letter-spacing: 0.5px; margin: 0; }
     .brand-sub { font-size: 11px; color: #93C5FD !important; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
-    /* Text Brightness Fixes */
+    /* High Visibility Text Rules */
     h1, h2, h3, h4, h5, h6, label, p, span, div {
         color: #F8FAFC !important;
     }
-    
-    .stMarkdown p {
-        color: #E2E8F0 !important;
-        font-weight: 500 !important;
-    }
 
-    /* Form Field Labels High Visibility */
     label[data-testid="stWidgetLabel"] {
         color: #F8FAFC !important;
         font-weight: 700 !important;
         font-size: 13px !important;
     }
 
+    /* FIX FILE UPLOADER WHITE BOX STYLING */
+    [data-testid="stFileUploader"] {
+        background-color: #1E293B !important;
+        border: 2px dashed #3B82F6 !important;
+        border-radius: 10px !important;
+        padding: 15px !important;
+    }
+    [data-testid="stFileUploader"] * {
+        color: #F8FAFC !important;
+    }
+    [data-testid="stFileUploader"] button {
+        background-color: #2563EB !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        font-weight: bold !important;
+    }
+
+    /* Radio Navigation Styling */
     .stRadio > label { display: none !important; }
     .stRadio div[role="radiogroup"] { gap: 12px !important; }
     .stRadio div[role="radiogroup"] > label {
@@ -98,7 +110,7 @@ st.markdown("""
 
     .card-label { font-size: 15px; font-weight: 700; color: #38BDF8 !important; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 
-    /* Inputs Bright Text Fix */
+    /* Text Inputs High Contrast */
     .stTextArea textarea {
         background-color: #0F172A !important;
         color: #FFFFFF !important;
