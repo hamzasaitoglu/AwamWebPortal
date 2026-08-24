@@ -18,15 +18,11 @@ OPENAI_API_KEY = k1 + k2
 
 st.set_page_config(page_title="Awam Logistics - Operasyonel Portal", page_icon="🚢", layout="wide")
 
-# High-Contrast Stylesheet for Perfect Visibility
+# High-Contrast Stylesheet
 st.markdown("""
 <style>
     .stApp { background-color: #0F172A !important; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
-    
-    [data-testid="stSidebar"] {
-        background-color: #1E293B !important;
-        border-right: 1px solid #334155 !important;
-    }
+    [data-testid="stSidebar"] { background-color: #1E293B !important; border-right: 1px solid #334155 !important; }
     
     .brand-box {
         background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%);
@@ -35,132 +31,37 @@ st.markdown("""
         padding: 16px;
         text-align: center;
         margin-bottom: 20px;
-        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
     }
-    .brand-title { font-size: 20px; font-weight: 900; color: #FFFFFF !important; letter-spacing: 0.5px; margin: 0; }
-    .brand-sub { font-size: 11px; color: #93C5FD !important; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+    .brand-title { font-size: 20px; font-weight: 900; color: #FFFFFF !important; margin: 0; }
+    .brand-sub { font-size: 11px; color: #93C5FD !important; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
 
-    /* Fix Text Visibility & High Contrast */
-    h1, h2, h3, h4, h5, h6, label, p, span, div {
-        color: #FFFFFF !important;
-    }
+    h1, h2, h3, h4, h5, h6, label, p, span, div { color: #FFFFFF !important; }
+    label[data-testid="stWidgetLabel"] { color: #FFFFFF !important; font-weight: 700 !important; font-size: 14px !important; }
 
-    label[data-testid="stWidgetLabel"] {
-        color: #FFFFFF !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-    }
+    [data-testid="stFileUploader"] { background-color: #1E293B !important; border: 2px dashed #3B82F6 !important; border-radius: 12px !important; padding: 15px !important; }
+    [data-testid="stFileUploader"] * { color: #FFFFFF !important; font-weight: 600 !important; }
+    [data-testid="stFileUploader"] button { background-color: #2563EB !important; color: #FFFFFF !important; border: none !important; }
 
-    /* COMPLETE FILE UPLOADER VISIBILITY FIX */
-    [data-testid="stFileUploader"] {
-        background-color: #1E293B !important;
-        border: 2px dashed #3B82F6 !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
-    }
-    [data-testid="stFileUploader"] section {
-        background-color: #1E293B !important;
-    }
-    [data-testid="stFileUploader"] * {
-        color: #FFFFFF !important;
-        font-weight: 600 !important;
-    }
-    [data-testid="stFileUploader"] button {
-        background-color: #2563EB !important;
-        color: #FFFFFF !important;
-        border: none !important;
-        font-weight: bold !important;
-        border-radius: 6px !important;
-    }
-
-    /* Radio Navigation Styling */
     .stRadio > label { display: none !important; }
     .stRadio div[role="radiogroup"] { gap: 12px !important; }
     .stRadio div[role="radiogroup"] > label {
-        background: #0F172A !important;
-        border: 1px solid #334155 !important;
-        border-radius: 10px !important;
-        padding: 14px 16px !important;
-        color: #E2E8F0 !important;
-        font-weight: 600 !important;
-        font-size: 14px !important;
-        transition: all 0.2s ease-in-out !important;
-        cursor: pointer !important;
-        width: 100% !important;
-    }
-    .stRadio div[role="radiogroup"] > label:hover {
-        border-color: #38BDF8 !important;
-        color: #FFFFFF !important;
-        background: #1E293B !important;
+        background: #0F172A !important; border: 1px solid #334155 !important; border-radius: 10px !important;
+        padding: 14px 16px !important; color: #E2E8F0 !important; font-weight: 600 !important; width: 100% !important;
     }
     .stRadio div[role="radiogroup"] > label[data-checked="true"] {
-        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
-        border-color: #60A5FA !important;
-        color: #FFFFFF !important;
-        font-weight: 700 !important;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
+        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important; border-color: #60A5FA !important; color: #FFFFFF !important;
     }
 
-    .awam-header {
-        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
-        border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-    }
+    .awam-header { background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 25px; }
     .awam-title { font-size: 24px; font-weight: 800; color: #FFFFFF !important; margin: 0; }
     .awam-subtitle { font-size: 13px; color: #CBD5E1 !important; margin-top: 5px; }
 
-    .card-label { font-size: 15px; font-weight: 700; color: #38BDF8 !important; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .card-label { font-size: 15px; font-weight: 700; color: #38BDF8 !important; margin-bottom: 12px; }
 
-    /* Text Inputs Styling */
-    .stTextArea textarea {
-        background-color: #0F172A !important;
-        color: #FFFFFF !important;
-        border: 1px solid #475569 !important;
-        border-radius: 8px !important;
-        font-size: 15px !important;
-        line-height: 1.6 !important;
-    }
-    .stTextInput input {
-        background-color: #0F172A !important;
-        color: #38BDF8 !important;
-        border: 1px solid #475569 !important;
-        border-radius: 8px !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-    }
+    .stTextArea textarea { background-color: #0F172A !important; color: #FFFFFF !important; border: 1px solid #475569 !important; border-radius: 8px !important; font-size: 15px !important; }
+    .stTextInput input { background-color: #0F172A !important; color: #38BDF8 !important; border: 1px solid #475569 !important; border-radius: 8px !important; font-weight: 700 !important; }
 
-    .stButton>button {
-        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
-        color: #FFFFFF !important;
-        font-weight: 700 !important;
-        font-size: 15px !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 12px 24px !important;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
-        transition: all 0.2s ease !important;
-    }
-    .stButton>button:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.5) !important;
-    }
-
-    .sys-status {
-        background: #0F172A;
-        border: 1px solid #1E293B;
-        border-radius: 8px;
-        padding: 10px;
-        margin-top: 30px;
-        font-size: 11px;
-        color: #10B981 !important;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .dot { width: 8px; height: 8px; background-color: #10B981; border-radius: 50%; display: inline-block; }
+    .stButton>button { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important; color: #FFFFFF !important; font-weight: 700 !important; border-radius: 8px !important; padding: 12px 24px !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -173,23 +74,11 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("<p style='color:#94A3B8 !important; font-size:12px; font-weight:700; margin-bottom:10px;'>MODÜL SEÇİMİ / SELECT MODULE</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#94A3B8 !important; font-size:12px; font-weight:700;'>MODÜL SEÇİMİ / SELECT MODULE</p>", unsafe_allow_html=True)
     
-    selected_tool = st.radio(
-        "Navigation",
-        [
-            "⚡ Hızlı RFQ Talep Dönüştürücü",
-            "📜 B/L Talimat Dönüştürücü"
-        ]
-    )
-    
-    st.markdown("""
-    <div class='sys-status'>
-        <span class='dot'></span> Awam Cloud Engine: Active & Online
-    </div>
-    """, unsafe_allow_html=True)
+    selected_tool = st.radio("Navigation", ["⚡ Hızlı RFQ Talep Dönüştürücü", "📜 B/L Talimat Dönüştürücü"])
 
-# Session State Keys Init
+# Session Keys Init
 bl_keys = [
     "booking_no", "shipping_line", "vessel", "pol", "pod", "freight_terms",
     "s_name", "s_addr", "s_tax", "s_tel", "s_email",
@@ -197,82 +86,53 @@ bl_keys = [
     "nt_name", "nt_addr", "nt_tax", "nt_tel", "nt_email"
 ]
 for k in bl_keys:
-    if k not in st.session_state:
-        st.session_state[k] = ""
+    if k not in st.session_state: st.session_state[k] = ""
 
 if "freight_terms" not in st.session_state or not st.session_state["freight_terms"]:
     st.session_state["freight_terms"] = "FREIGHT PREPAID"
 
 if "containers" not in st.session_state:
-    st.session_state.containers = pd.DataFrame([
-        {"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}
-    ])
+    st.session_state.containers = pd.DataFrame([{"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}])
 
 if "widget_version" not in st.session_state:
     st.session_state.widget_version = 0
 
 def reset_all_fields():
-    for k in bl_keys:
-        st.session_state[k] = ""
+    for k in bl_keys: st.session_state[k] = ""
     st.session_state["freight_terms"] = "FREIGHT PREPAID"
-    st.session_state.containers = pd.DataFrame([
-        {"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}
-    ])
+    st.session_state.containers = pd.DataFrame([{"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}])
     st.session_state.widget_version += 1
 
-# Universal File Reader for PDF, Excel, Word, and TXT
 def extract_universal_text(file):
     filename = file.name.lower()
-    text = ""
-    
-    # 1. Read Word Documents (.docx)
     if filename.endswith(".docx"):
         doc = docx.Document(file)
         lines = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
-        for table in doc.tables:
-            for row in table.rows:
-                row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
-                if row_text: lines.append(" | ".join(row_text))
-        text = "\n".join(lines)
-        
-    # 2. Read PDF Documents (.pdf)
+        for t in doc.tables:
+            for r in t.rows:
+                rt = [c.text.strip() for c in r.cells if c.text.strip()]
+                if rt: lines.append(" | ".join(rt))
+        return "\n".join(lines)
     elif filename.endswith(".pdf"):
         reader = pypdf.PdfReader(file)
-        pdf_texts = []
-        for page in reader.pages:
-            t = page.extract_text()
-            if t: pdf_texts.append(t)
-        text = "\n".join(pdf_texts)
-        
-    # 3. Read Excel Documents (.xlsx, .xls)
+        return "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
     elif filename.endswith(".xlsx") or filename.endswith(".xls"):
         xls = pd.ExcelFile(file)
-        excel_lines = []
-        for sheet in xls.sheet_names:
-            df = pd.read_excel(xls, sheet_name=sheet).fillna("")
-            excel_lines.append(f"--- Sheet: {sheet} ---")
-            for _, row in df.iterrows():
-                row_str = " | ".join([str(v) for v in row.values if str(v).strip() != ""])
-                if row_str: excel_lines.append(row_str)
-        text = "\n".join(excel_lines)
-        
-    # 4. Read Text Documents (.txt)
+        lines = []
+        for s in xls.sheet_names:
+            df = pd.read_excel(xls, sheet_name=s).fillna("")
+            for _, r in df.iterrows():
+                rs = " | ".join([str(v) for v in r.values if str(v).strip() != ""])
+                if rs: lines.append(rs)
+        return "\n".join(lines)
     else:
-        text = file.read().decode("utf-8", errors="ignore")
-        
-    return text
+        return file.read().decode("utf-8", errors="ignore")
 
 # ---------------------------------------------------------
 # MODULE 1: SATIŞ - HIZLI FİYATLANDIRMA TALEP DÖNÜŞTÜRÜCÜ
 # ---------------------------------------------------------
 if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
-    
-    st.markdown("""
-    <div class='awam-header'>
-        <div class='awam-title'>⚡ Satış Hızlı Talep Standardizasyon Aracı (Awam Quick RFQ)</div>
-        <div class='awam-subtitle'>Müşteriden gelen ham mesajları 4 satırlık UN/LOCODE standart fiyatlandırma formatına dönüştürün.</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("<div class='awam-header'><div class='awam-title'>⚡ Satış Hızlı Talep Standardizasyon Aracı (Awam Quick RFQ)</div><div class='awam-subtitle'>Müşteriden gelen ham mesajları 4 satırlık UN/LOCODE standart fiyatlandırma formatına dönüştürün.</div></div>", unsafe_allow_html=True)
 
     now = datetime.datetime.now()
     default_ref = f"AGL{now.strftime('%y%m%d')}{now.strftime('%H%M')}"
@@ -284,99 +144,84 @@ if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
         raw_text = st.text_area("raw_input_box", height=220, placeholder="ادخل الرساله هنا", label_visibility="collapsed")
         
         r_col1, r_col2 = st.columns([1.2, 1])
-        with r_col1:
-            custom_ref = st.text_input("Referans Kodu", value=default_ref, label_visibility="collapsed")
-        with r_col2:
-            process_btn = st.button("⚡ Hızlı Çevir", use_container_width=True)
+        with r_col1: custom_ref = st.text_input("Referans Kodu", value=default_ref, label_visibility="collapsed")
+        with r_col2: process_btn = st.button("⚡ Hızlı Çevir", use_container_width=True)
 
     if process_btn and raw_text.strip():
-        with st.spinner("AI Tarafından İngilizceye ve Standart Formata Dönüştürülüyor..."):
+        with st.spinner("AI Analiz Ediyor ve Awam Standartına Getiriyor..."):
             try:
                 client = openai.OpenAI(api_key=OPENAI_API_KEY)
                 prompt = f"""
-                You are an expert Freight Forwarding speed-parser for Awam Logistics.
-                Convert the raw inquiry text into a STRICT 4-LINE ENGLISH MESSAGE.
-                DO NOT INCLUDE BRACKETS LIKE [POL], [POD], [QTY], OR LABELS. OUTPUT ONLY THE VALUES IN UPPERCASE.
+                You are a Freight Forwarding speed-parser for Awam Logistics.
+                Convert the raw request into a STRICT 4-LINE UPPERCASE ENGLISH MESSAGE.
+                DO NOT USE ANY BRACKETS, NO LABELS (like POL, POD, QTY). ONLY THE VALUES.
 
-                REQUIRED 4-LINE FORMAT (ONLY VALUES, NO LABELS/BRACKETS):
-                LINE 1: POL_NAME POD_NAME (Translated to standard English shipping names, e.g. IZMIR HODEIDAH)
-                LINE 2: QTYxCONTAINER_TYPE (Standardized e.g. 20X40 RF, 1X40 HC, 2X20 GP)
-                LINE 3: CLIENT_NAME (Translated/Transliterated to UPPERCASE ENGLISH, e.g. AZIZ QATAM)
-                LINE 4: REF_CODE (Exact value provided below)
+                LINE 1: [POL_NAME] [POD_NAME]
+                LINE 2: [QUANTITY]X[CONTAINER_TYPE]
+                LINE 3: [CLIENT_NAME_IN_ENGLISH]
+                LINE 4: [REF_CODE]
 
-                Exact Reference Code for Line 4: {custom_ref}
+                CRITICAL PORT DICTIONARY RULES:
+                - ازميت / إزميت / KOCAELI -> IZMIT
+                - ازمير / إزمير -> IZMIR
+                - الحديده / الحديدة -> HODEIDAH
+                - مرسين -> MERSIN
+                - عدن -> ADEN
+                - بورسودان -> PORT SUDAN
 
-                Raw Text Input:
+                CRITICAL CONTAINER QUANTITY & TYPE RULES:
+                - "اربعين" or "حاويه اربعين" alone means ONE 40ft container -> "1X40 HC"
+                - "عشرين" or "حاويه عشرين" alone means ONE 20ft container -> "1X20 GP"
+                - "عشرين حاويه اربعين" means 20 units of 40ft containers -> "20X40 HC"
+                - "حاويه اربعين مبرده" -> "1X40 RF"
+                - NEVER parse "اربعين" as 40 quantity of 20ft containers unless explicitly written as "40 حاويه عشرين"!
+
+                Exact Ref Code for Line 4: {custom_ref}
+
+                Raw Text:
                 {raw_text}
                 """
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                formatted_result = response.choices[0].message.content.strip()
-                st.session_state["rfq_result"] = formatted_result
+                response = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
+                st.session_state["rfq_result"] = response.choices[0].message.content.strip()
             except Exception as e:
-                st.error(f"Hata Oluştu: {str(e)}")
+                st.error(f"Hata: {str(e)}")
 
     with col_output:
         st.markdown("<div class='card-label'>📤 Hazır Standart Mesaj</div>", unsafe_allow_html=True)
         if "rfq_result" in st.session_state:
             st.text_area("rfq_output_box", value=st.session_state["rfq_result"], height=220, label_visibility="collapsed")
-            
             text_to_copy = json.dumps(st.session_state["rfq_result"])
-            copy_button_html = f"""
-                <div style="margin-top: 10px;">
-                    <button id="copyBtn" onclick="navigator.clipboard.writeText({text_to_copy})" style="
-                        width: 100%; background: #16A34A; color: white; font-weight: bold; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 14px;
-                    ">📋 Metni Doğrudan Kopyala (Copy Result)</button>
-                </div>
-            """
+            copy_button_html = f"""<div style="margin-top: 10px;"><button id="copyBtn" onclick="navigator.clipboard.writeText({text_to_copy})" style="width: 100%; background: #16A34A; color: white; font-weight: bold; border: none; padding: 12px; border-radius: 8px; cursor: pointer;">📋 Metni Doğrudan Kopyala (Copy Result)</button></div>"""
             components.html(copy_button_html, height=65)
         else:
             st.text_area("rfq_output_placeholder", value="Dönüştürülen mesaj burada görünecektir...", height=220, disabled=True, label_visibility="collapsed")
 
 # ---------------------------------------------------------
-# MODULE 2: B/L TALİMAT DÖNÜŞTÜRÜCÜ (UNIVERSAL FILE PARSER)
+# MODULE 2: B/L TALİMAT DÖNÜŞTÜRÜCÜ
 # ---------------------------------------------------------
 elif selected_tool == "📜 B/L Talimat Dönüştürücü":
-    
-    st.markdown("""
-    <div class='awam-header'>
-        <div class='awam-title'>📜 B/L Talimat (Bill of Lading Instruction) Dönüştürücü</div>
-        <div class='awam-subtitle'>Word, PDF, Excel veya TXT talimatlarını yapay zeka ile okuyun, eksiklikleri kontrol edin ve Awam Excel formatında indirin.</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("<div class='awam-header'><div class='awam-title'>📜 B/L Talimat (Bill of Lading Instruction) Dönüştürücü</div><div class='awam-subtitle'>Word, PDF, Excel veya TXT talimatlarını yapay zeka ile okuyun ve Awam Excel formatında indirin.</div></div>", unsafe_allow_html=True)
 
     def extract_with_ai(text_content):
         client = openai.OpenAI(api_key=OPENAI_API_KEY)
         prompt = f"""
-        You are an expert shipping documentation parser for Awam Logistics.
-        Parse the text and extract details into a raw JSON structure:
+        Parse B/L instruction text into JSON:
         {{
             "booking_no": "", "shipping_line": "", "vessel": "", "pol": "", "pod": "", "freight_terms": "FREIGHT PREPAID",
             "s_name": "", "s_addr": "", "s_tax": "", "s_tel": "", "s_email": "",
             "cn_name": "", "cn_addr": "", "cn_tax": "", "cn_tel": "", "cn_email": "",
             "nt_name": "", "nt_addr": "", "nt_tax": "", "nt_tel": "", "nt_email": "",
-            "containers": [
-                {{"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}}
-            ]
+            "containers": [{"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}]
         }}
-
-        Text:
-        {text_content}
+        Text: {text_content}
         """
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"}
-        )
+        response = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], response_format={"type": "json_object"})
         return json.loads(response.choices[0].message.content.strip())
 
     uploaded_file = st.file_uploader("B/L Talimat Dosyasını Yükleyin (Word / PDF / Excel / TXT)", type=["docx", "pdf", "xlsx", "xls", "txt"])
     
     col_btn1, col_btn2 = st.columns([2, 1])
-    with col_btn1:
-        process_doc_btn = st.button("🚀 AI ile Oku ve Doldur", type="primary", use_container_width=True)
+    with col_btn1: process_doc_btn = st.button("🚀 AI ile Oku ve Doldur", type="primary", use_container_width=True)
     with col_btn2:
         if st.button("🔄 Yeni İşlem / Sıfırla (Reset)", use_container_width=True):
             reset_all_fields()
@@ -384,26 +229,19 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
 
     if process_doc_btn:
         if uploaded_file is not None:
-            with st.spinner("Doküman Analiz Ediliyor ve Ekrana Yansıtılıyor..."):
+            with st.spinner("Doküman Analiz Ediliyor..."):
                 try:
                     text_content = extract_universal_text(uploaded_file)
                     res = extract_with_ai(text_content)
-                    
                     for k in bl_keys:
-                        if k in res:
-                            st.session_state[k] = str(res[k]) if res[k] else ""
-                    
+                        if k in res: st.session_state[k] = str(res[k]) if res[k] else ""
                     if "containers" in res and res["containers"]:
                         st.session_state.containers = pd.DataFrame(res["containers"])
-                    
                     st.session_state.widget_version += 1
-                    
                     st.success("✅ Tüm Bilgiler Ekran ve Excel İçin Başarıyla Senkronize Edildi!")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Hata Oluştu: {str(e)}")
-        else:
-            st.warning("Lütfen önce bir dosya yükleyin.")
+                    st.error(f"Hata: {str(e)}")
 
     v = st.session_state.widget_version
 
@@ -420,8 +258,6 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
         st.session_state["pod"] = st.text_input("POD (Port of Discharge)", value=st.session_state.get("pod", ""), key=f"pod_{v}")
 
     st.subheader("👥 Partiler (Shipper / Consignee / Notify)")
-    
-    # Shipper Row
     st.markdown("**1. SHIPPER / YÜKLEYİCİ**")
     c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
     with c1: st.session_state["s_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("s_name", ""), key=f"sn_{v}")
@@ -430,7 +266,6 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
     with c4: st.session_state["s_tel"] = st.text_input("TEL", value=st.session_state.get("s_tel", ""), key=f"stp_{v}")
     with c5: st.session_state["s_email"] = st.text_input("EMAIL", value=st.session_state.get("s_email", ""), key=f"se_{v}")
 
-    # Consignee Row
     st.markdown("**2. CONSIGNEE / ALICI**")
     c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
     with c1: st.session_state["cn_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("cn_name", ""), key=f"cnn_{v}")
@@ -439,7 +274,6 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
     with c4: st.session_state["cn_tel"] = st.text_input("TEL", value=st.session_state.get("cn_tel", ""), key=f"cntp_{v}")
     with c5: st.session_state["cn_email"] = st.text_input("EMAIL", value=st.session_state.get("cn_email", ""), key=f"cne_{v}")
 
-    # Notify Row
     st.markdown("**3. NOTIFY / İHBAR TARAF**")
     c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
     with c1: st.session_state["nt_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("nt_name", ""), key=f"ntn_{v}")
@@ -452,58 +286,38 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
     edited_df = st.data_editor(st.session_state.containers, num_rows="dynamic", use_container_width=True, key=f"de_{v}")
 
     total_containers = len(edited_df[edited_df["Container No"].astype(str).str.strip() != ""])
-    
-    pkg_sum_str = ""
-    try:
-        pkg_vals = edited_df["Packages"].astype(str).tolist()
-        pkg_nums = [float(pd.to_numeric(p.split()[0], errors='coerce')) for p in pkg_vals if p.strip()]
-        valid_nums = [n for n in pkg_nums if not pd.isna(n)]
-        if valid_nums: pkg_sum_str = f"{int(sum(valid_nums))} PKGS"
-        else: pkg_sum_str = f"{len(pkg_vals)} ITEMS"
-    except:
-        pkg_sum_str = "-"
-
     total_weight = edited_df["Gross Weight (KG)"].apply(lambda x: pd.to_numeric(x, errors='coerce')).sum()
     total_cbm = edited_df["Volume (CBM)"].apply(lambda x: pd.to_numeric(x, errors='coerce')).sum()
 
     st.markdown("### 📊 Totals Summary")
-    s1, s2, s3, s4 = st.columns(4)
+    s1, s2, s3 = st.columns(3)
     with s1: st.markdown(f"**Containers:** {total_containers}")
-    with s2: st.markdown(f"**Packages:** {pkg_sum_str}")
-    with s3: st.markdown(f"**Total Weight:** {total_weight:,.2f} KG")
-    with s4: st.markdown(f"**Total Volume:** {total_cbm:,.2f} CBM")
+    with s2: st.markdown(f"**Total Weight:** {total_weight:,.2f} KG")
+    with s3: st.markdown(f"**Total Volume:** {total_cbm:,.2f} CBM")
 
     def generate_excel():
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "B-L Talimat"
         ws.views.sheetView[0].showGridLines = True
-
         NAVY_FILL = PatternFill(start_color="1A365D", end_color="1A365D", fill_type="solid")
         BLUE_FILL = PatternFill(start_color="2B6CB0", end_color="2B6CB0", fill_type="solid")
         GRAY_FILL = PatternFill(start_color="EDF2F7", end_color="EDF2F7", fill_type="solid")
-        BORDER_BOX = Border(left=Side(style="thin", color="CBD5E0"), right=Side(style="thin", color="CBD5E0"),
-                            top=Side(style="thin", color="CBD5E0"), bottom=Side(style="thin", color="CBD5E0"))
+        BORDER_BOX = Border(left=Side(style="thin", color="CBD5E0"), right=Side(style="thin", color="CBD5E0"), top=Side(style="thin", color="CBD5E0"), bottom=Side(style="thin", color="CBD5E0"))
 
         ws.merge_cells("A1:G1")
         ws["A1"] = "AWAM LOGISTICS - BILL OF LADING INSTRUCTION (B/L TALİMAT)"
         ws["A1"].font = Font(name="Calibri", size=15, bold=True, color="FFFFFF")
         ws["A1"].fill = NAVY_FILL
         ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
-        ws.row_dimensions[1].height = 32
 
         ws.merge_cells("A2:G2")
         ws["A2"] = "Official Shipping Instruction Document | www.awamlogistics.com"
         ws["A2"].font = Font(name="Calibri", size=10, italic=True, color="FFFFFF")
         ws["A2"].fill = BLUE_FILL
         ws["A2"].alignment = Alignment(horizontal="center", vertical="center")
-        ws.row_dimensions[2].height = 20
 
-        info_list = [
-            ("Booking No:", st.session_state.booking_no), ("Shipping Line:", st.session_state.shipping_line),
-            ("Vessel & Voyage:", st.session_state.vessel), ("POL (Loading Port):", st.session_state.pol),
-            ("POD (Discharge Port):", st.session_state.pod), ("Freight Terms:", st.session_state.freight_terms)
-        ]
+        info_list = [("Booking No:", st.session_state.booking_no), ("Shipping Line:", st.session_state.shipping_line), ("Vessel & Voyage:", st.session_state.vessel), ("POL (Loading Port):", st.session_state.pol), ("POD (Discharge Port):", st.session_state.pod), ("Freight Terms:", st.session_state.freight_terms)]
         for idx, (lbl, val) in enumerate(info_list, start=4):
             ws.merge_cells(start_row=idx, start_column=1, end_row=idx, end_column=2)
             ws.cell(row=idx, column=1, value=lbl).font = Font(bold=True, size=10)
@@ -511,92 +325,42 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
             ws.merge_cells(start_row=idx, start_column=3, end_row=idx, end_column=7)
             ws.cell(row=idx, column=3, value=val).font = Font(size=10)
             for c in range(1, 8): ws.cell(row=idx, column=c).border = BORDER_BOX
-            ws.row_dimensions[idx].height = 20
 
         def add_party_rows(start_row, title, name, addr, tax, tel, email):
             ws.merge_cells(start_row=start_row, start_column=1, end_row=start_row, end_column=7)
             ws.cell(row=start_row, column=1, value=title).font = Font(bold=True, size=10, color="1A365D")
             ws.cell(row=start_row, column=1).fill = GRAY_FILL
-            ws.row_dimensions[start_row].height = 20
-            
-            rows_data = [
-                ("Company Name", name),
-                ("Address", addr),
-                ("Tax Number / CR No", tax),
-                ("Tel", tel),
-                ("Email", email)
-            ]
-            
+            rows_data = [("Company Name", name), ("Address", addr), ("Tax Number / CR No", tax), ("Tel", tel), ("Email", email)]
             for offset, (lbl, val) in enumerate(rows_data, start=1):
                 r = start_row + offset
-                ws.row_dimensions[r].height = 19
-                
                 c_lbl = ws.cell(row=r, column=1, value=lbl)
                 c_lbl.font = Font(size=10, italic=True)
-                c_lbl.alignment = Alignment(horizontal="left", vertical="center")
-                
                 ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=7)
-                c_val = ws.cell(row=r, column=2, value=val)
-                c_val.font = Font(size=10)
-                c_val.alignment = Alignment(horizontal="left", vertical="center")
-                
-                for col in range(1, 8):
-                    ws.cell(row=r, column=col).border = BORDER_BOX
+                ws.cell(row=r, column=2, value=val).font = Font(size=10)
+                for col in range(1, 8): ws.cell(row=r, column=col).border = BORDER_BOX
 
         add_party_rows(11, "1. SHIPPER DETAILS", st.session_state.s_name, st.session_state.s_addr, st.session_state.s_tax, st.session_state.s_tel, st.session_state.s_email)
         add_party_rows(17, "2. CONSIGNEE DETAILS", st.session_state.cn_name, st.session_state.cn_addr, st.session_state.cn_tax, st.session_state.cn_tel, st.session_state.cn_email)
         add_party_rows(23, "3. NOTIFY PARTY DETAILS", st.session_state.nt_name, st.session_state.nt_addr, st.session_state.nt_tax, st.session_state.nt_tel, st.session_state.nt_email)
 
         headers = ["Container No", "Seal No", "Type", "Packages", "Description of Goods", "Gross Weight (KG)", "Volume (CBM)"]
-        ws.row_dimensions[29].height = 25
         for c_i, h in enumerate(headers, 1):
             cell = ws.cell(row=29, column=c_i, value=h)
             cell.font = Font(bold=True, color="FFFFFF", size=10)
             cell.fill = BLUE_FILL
-            cell.alignment = Alignment(horizontal="center", vertical="center")
             cell.border = BORDER_BOX
 
-        start_cargo_row = 30
-        curr_row = start_cargo_row
+        curr_row = 30
         for idx, row in edited_df.iterrows():
-            ws.cell(row=curr_row, column=1, value=row["Container No"]).alignment = Alignment(horizontal="center")
-            ws.cell(row=curr_row, column=2, value=row["Seal No"]).alignment = Alignment(horizontal="center")
-            ws.cell(row=curr_row, column=3, value=row["Type"]).alignment = Alignment(horizontal="center")
-            ws.cell(row=curr_row, column=4, value=row["Packages"]).alignment = Alignment(horizontal="center")
-            ws.cell(row=curr_row, column=5, value=row["Description"]).alignment = Alignment(wrap_text=True)
+            ws.cell(row=curr_row, column=1, value=row["Container No"])
+            ws.cell(row=curr_row, column=2, value=row["Seal No"])
+            ws.cell(row=curr_row, column=3, value=row["Type"])
+            ws.cell(row=curr_row, column=4, value=row["Packages"])
+            ws.cell(row=curr_row, column=5, value=row["Description"])
             ws.cell(row=curr_row, column=6, value=float(row["Gross Weight (KG)"] if row["Gross Weight (KG)"] else 0)).number_format = '#,##0.00'
             ws.cell(row=curr_row, column=7, value=float(row["Volume (CBM)"] if row["Volume (CBM)"] else 0)).number_format = '#,##0.00'
             for c in range(1, 8): ws.cell(row=curr_row, column=c).border = BORDER_BOX
             curr_row += 1
-
-        ws.row_dimensions[curr_row].height = 24
-        ws.merge_cells(start_row=curr_row, start_column=1, end_row=curr_row, end_column=3)
-        t_cell = ws.cell(row=curr_row, column=1, value=f"TOTAL: {total_containers} CONTAINER(S)")
-        t_cell.font = Font(bold=True, size=10, color="1A365D")
-        t_cell.alignment = Alignment(horizontal="center", vertical="center")
-
-        pkg_cell = ws.cell(row=curr_row, column=4, value=pkg_sum_str)
-        pkg_cell.font = Font(bold=True, size=10)
-        pkg_cell.alignment = Alignment(horizontal="center", vertical="center")
-
-        ws.cell(row=curr_row, column=5, value="")
-
-        w_cell = ws.cell(row=curr_row, column=6, value=f"=SUM(F{start_cargo_row}:F{curr_row-1})")
-        w_cell.font = Font(bold=True, size=10)
-        w_cell.number_format = '#,##0.00'
-        w_cell.alignment = Alignment(horizontal="right", vertical="center")
-
-        v_cell = ws.cell(row=curr_row, column=7, value=f"=SUM(G{start_cargo_row}:G{curr_row-1})")
-        v_cell.font = Font(bold=True, size=10)
-        v_cell.number_format = '#,##0.00'
-        v_cell.alignment = Alignment(horizontal="right", vertical="center")
-
-        for c in range(1, 8):
-            ws.cell(row=curr_row, column=c).border = BORDER_BOX
-            ws.cell(row=curr_row, column=c).fill = GRAY_FILL
-
-        col_w = {1:22, 2:16, 3:12, 4:16, 5:40, 6:18, 7:15}
-        for c, w in col_w.items(): ws.column_dimensions[get_column_letter(c)].width = w
 
         output = io.BytesIO()
         wb.save(output)
@@ -605,10 +369,4 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
     st.markdown("---")
     excel_data = generate_excel()
     b_no = st.session_state.booking_no
-    st.download_button(
-        label="📥 B/L Talimat Excel Dosyasını İndir (Awam Mavi Format)",
-        data=excel_data,
-        file_name=f"BL_Talimat_{b_no if b_no else 'New'}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        use_container_width=True
-    )
+    st.download_button("📥 B/L Talimat Excel Dosyasını İndir (Awam Mavi Format)", data=excel_data, file_name=f"BL_Talimat_{b_no if b_no else 'New'}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
