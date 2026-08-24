@@ -17,11 +17,13 @@ OPENAI_API_KEY = k1 + k2
 
 st.set_page_config(page_title="Awam Logistics - Operasyonel Portal", page_icon="🚢", layout="wide")
 
-# Executive Dark UI Stylesheet
+# High-Contrast Stylesheet for Perfect Visibility
 st.markdown("""
 <style>
-    .stApp { background-color: #0F172A; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    /* Global Background */
+    .stApp { background-color: #0F172A !important; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
     
+    /* Sidebar Styling */
     [data-testid="stSidebar"] {
         background-color: #1E293B !important;
         border-right: 1px solid #334155 !important;
@@ -36,8 +38,25 @@ st.markdown("""
         margin-bottom: 20px;
         box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
     }
-    .brand-title { font-size: 20px; font-weight: 900; color: #FFFFFF; letter-spacing: 0.5px; margin: 0; }
-    .brand-sub { font-size: 11px; color: #93C5FD; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+    .brand-title { font-size: 20px; font-weight: 900; color: #FFFFFF !important; letter-spacing: 0.5px; margin: 0; }
+    .brand-sub { font-size: 11px; color: #93C5FD !important; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* Text Brightness Fixes */
+    h1, h2, h3, h4, h5, h6, label, p, span, div {
+        color: #F8FAFC !important;
+    }
+    
+    .stMarkdown p {
+        color: #E2E8F0 !important;
+        font-weight: 500 !important;
+    }
+
+    /* Form Field Labels High Visibility */
+    label[data-testid="stWidgetLabel"] {
+        color: #F8FAFC !important;
+        font-weight: 700 !important;
+        font-size: 13px !important;
+    }
 
     .stRadio > label { display: none !important; }
     .stRadio div[role="radiogroup"] { gap: 12px !important; }
@@ -46,7 +65,7 @@ st.markdown("""
         border: 1px solid #334155 !important;
         border-radius: 10px !important;
         padding: 14px 16px !important;
-        color: #94A3B8 !important;
+        color: #E2E8F0 !important;
         font-weight: 600 !important;
         font-size: 14px !important;
         transition: all 0.2s ease-in-out !important;
@@ -55,7 +74,7 @@ st.markdown("""
     }
     .stRadio div[role="radiogroup"] > label:hover {
         border-color: #38BDF8 !important;
-        color: #F8FAFC !important;
+        color: #FFFFFF !important;
         background: #1E293B !important;
     }
     .stRadio div[role="radiogroup"] > label[data-checked="true"] {
@@ -74,15 +93,16 @@ st.markdown("""
         margin-bottom: 25px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
     }
-    .awam-title { font-size: 24px; font-weight: 800; color: #F8FAFC; margin: 0; }
-    .awam-subtitle { font-size: 13px; color: #94A3B8; margin-top: 5px; }
+    .awam-title { font-size: 24px; font-weight: 800; color: #FFFFFF !important; margin: 0; }
+    .awam-subtitle { font-size: 13px; color: #CBD5E1 !important; margin-top: 5px; }
 
-    .card-label { font-size: 15px; font-weight: 700; color: #38BDF8; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .card-label { font-size: 15px; font-weight: 700; color: #38BDF8 !important; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 
+    /* Inputs Bright Text Fix */
     .stTextArea textarea {
         background-color: #0F172A !important;
-        color: #F8FAFC !important;
-        border: 1px solid #334155 !important;
+        color: #FFFFFF !important;
+        border: 1px solid #475569 !important;
         border-radius: 8px !important;
         font-size: 15px !important;
         line-height: 1.6 !important;
@@ -90,7 +110,7 @@ st.markdown("""
     .stTextInput input {
         background-color: #0F172A !important;
         color: #38BDF8 !important;
-        border: 1px solid #334155 !important;
+        border: 1px solid #475569 !important;
         border-radius: 8px !important;
         font-weight: 700 !important;
         font-size: 14px !important;
@@ -119,7 +139,7 @@ st.markdown("""
         padding: 10px;
         margin-top: 30px;
         font-size: 11px;
-        color: #10B981;
+        color: #10B981 !important;
         display: flex;
         align-items: center;
         gap: 6px;
@@ -137,7 +157,7 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("<p style='color:#64748B; font-size:12px; font-weight:700; margin-bottom:10px;'>MODÜL SEÇİMİ / SELECT MODULE</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#94A3B8 !important; font-size:12px; font-weight:700; margin-bottom:10px;'>MODÜL SEÇİMİ / SELECT MODULE</p>", unsafe_allow_html=True)
     
     selected_tool = st.radio(
         "Navigation",
