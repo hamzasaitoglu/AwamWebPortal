@@ -75,7 +75,6 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     
     st.markdown("<p style='color:#94A3B8 !important; font-size:12px; font-weight:700;'>MODÜL SEÇİMİ / SELECT MODULE</p>", unsafe_allow_html=True)
-    
     selected_tool = st.radio("Navigation", ["⚡ Hızlı RFQ Talep Dönüştürücü", "📜 B/L Talimat Dönüştürücü"])
 
 # Session Keys Init
@@ -152,33 +151,51 @@ if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
             try:
                 client = openai.OpenAI(api_key=OPENAI_API_KEY)
                 prompt = f"""
-                You are a Freight Forwarding speed-parser for Awam Logistics.
+                You are an expert Freight Forwarding speed-parser for Awam Logistics.
                 Convert the raw request into a STRICT 4-LINE UPPERCASE ENGLISH MESSAGE.
-                DO NOT USE ANY BRACKETS, NO LABELS (like POL, POD, QTY). ONLY THE VALUES.
+                DO NOT USE ANY BRACKETS LIKE [POL], [POD], [QTY] OR LABELS. OUTPUT ONLY THE VALUES.
 
-                LINE 1: [POL_NAME] [POD_NAME]
+                LINE 1: [POL_NAME / TURKISH_ORIGIN] [POD_NAME]
                 LINE 2: [QUANTITY]X[CONTAINER_TYPE]
                 LINE 3: [CLIENT_NAME_IN_ENGLISH]
                 LINE 4: [REF_CODE]
 
-                CRITICAL PORT DICTIONARY RULES:
-                - ازميت / إزميت / KOCAELI -> IZMIT
-                - ازمير / إزمير -> IZMIR
-                - الحديده / الحديدة -> HODEIDAH
+                TURKISH CITIES, DISTRICTS & PORTS DICTIONARY:
+                - أرنؤوط كوي / ارنفوتكوي / ارناؤوط كوي -> ARNAVUTKOY (ISTANBUL)
+                - أمبارلي / امبارلي -> AMBARLI
+                - إزميت / ازميت / كوجالي -> IZMIT
+                - إزمير / ازمير -> IZMIR
                 - مرسين -> MERSIN
-                - عدن -> ADEN
-                - بورسودان -> PORT SUDAN
+                - اسكندرون / إسكندرون -> ISKENDERUN
+                - غازي عنتاب / عنتاب -> GAZIANTEP
+                - بورصة / بورصه -> BURSA
+                - قونية / قونيا -> KONYA
+                - قيصري -> KAYSERI
+                - جيمليك -> GEMLIK
+                - إيفياب -> EVYAP
+                - حيدر باشا -> HAYDARPASA
 
-                CRITICAL CONTAINER QUANTITY & TYPE RULES:
-                - "اربعين" or "حاويه اربعين" alone means ONE 40ft container -> "1X40 HC"
-                - "عشرين" or "حاويه عشرين" alone means ONE 20ft container -> "1X20 GP"
-                - "عشرين حاويه اربعين" means 20 units of 40ft containers -> "20X40 HC"
-                - "حاويه اربعين مبرده" -> "1X40 RF"
-                - NEVER parse "اربعين" as 40 quantity of 20ft containers unless explicitly written as "40 حاويه عشرين"!
+                GLOBAL DESTINATION PORTS DICTIONARY:
+                - عدن -> ADEN
+                - الحديدة / الحديده -> HODEIDAH
+                - بورسودان / بورتسودان -> PORT SUDAN
+                - مصراتة / مصراته -> MISURATA
+                - طرابلس -> TRIPOLI
+                - بنغازي -> BENGHAZI
+                - جبل علي -> JEBEL ALI
+                - جدة / جده -> JEDDAH
+                - العقبة / العقبه -> AQABA
+
+                EQUIPMENT RULES:
+                - "ثلاث اربعين" or "3 اربعين" -> 3X40 HC
+                - "حاويه اربعين" -> 1X40 HC
+                - "ثلاث عشرين" -> 3X20 GP
+                - "حاويه عشرين" -> 1X20 GP
+                - "مبرده" -> RF
 
                 Exact Ref Code for Line 4: {custom_ref}
 
-                Raw Text:
+                Raw Text Input:
                 {raw_text}
                 """
                 response = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
