@@ -8,6 +8,7 @@ import docx
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+import pypdf
 import openai
 
 # Safe Key Assembly for Awam Logistics System
@@ -17,13 +18,11 @@ OPENAI_API_KEY = k1 + k2
 
 st.set_page_config(page_title="Awam Logistics - Operasyonel Portal", page_icon="🚢", layout="wide")
 
-# High-Contrast Executive Stylesheet (File Uploader Fix Included)
+# High-Contrast Stylesheet for Perfect Visibility
 st.markdown("""
 <style>
-    /* Global Page Styling */
     .stApp { background-color: #0F172A !important; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
     
-    /* Sidebar Styling */
     [data-testid="stSidebar"] {
         background-color: #1E293B !important;
         border-right: 1px solid #334155 !important;
@@ -41,32 +40,37 @@ st.markdown("""
     .brand-title { font-size: 20px; font-weight: 900; color: #FFFFFF !important; letter-spacing: 0.5px; margin: 0; }
     .brand-sub { font-size: 11px; color: #93C5FD !important; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
-    /* High Visibility Text Rules */
+    /* Fix Text Visibility & High Contrast */
     h1, h2, h3, h4, h5, h6, label, p, span, div {
-        color: #F8FAFC !important;
+        color: #FFFFFF !important;
     }
 
     label[data-testid="stWidgetLabel"] {
-        color: #F8FAFC !important;
+        color: #FFFFFF !important;
         font-weight: 700 !important;
-        font-size: 13px !important;
+        font-size: 14px !important;
     }
 
-    /* FIX FILE UPLOADER WHITE BOX STYLING */
+    /* COMPLETE FILE UPLOADER VISIBILITY FIX */
     [data-testid="stFileUploader"] {
         background-color: #1E293B !important;
         border: 2px dashed #3B82F6 !important;
-        border-radius: 10px !important;
-        padding: 15px !important;
+        border-radius: 12px !important;
+        padding: 20px !important;
+    }
+    [data-testid="stFileUploader"] section {
+        background-color: #1E293B !important;
     }
     [data-testid="stFileUploader"] * {
-        color: #F8FAFC !important;
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
     }
     [data-testid="stFileUploader"] button {
         background-color: #2563EB !important;
         color: #FFFFFF !important;
         border: none !important;
         font-weight: bold !important;
+        border-radius: 6px !important;
     }
 
     /* Radio Navigation Styling */
@@ -110,7 +114,7 @@ st.markdown("""
 
     .card-label { font-size: 15px; font-weight: 700; color: #38BDF8 !important; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 
-    /* Text Inputs High Contrast */
+    /* Text Inputs Styling */
     .stTextArea textarea {
         background-color: #0F172A !important;
         color: #FFFFFF !important;
@@ -216,6 +220,48 @@ def reset_all_fields():
     ])
     st.session_state.widget_version += 1
 
+# Universal File Reader for PDF, Excel, Word, and TXT
+def extract_universal_text(file):
+    filename = file.name.lower()
+    text = ""
+    
+    # 1. Read Word Documents (.docx)
+    if filename.endswith(".docx"):
+        doc = docx.Document(file)
+        lines = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
+        for table in doc.tables:
+            for row in table.rows:
+                row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                if row_text: lines.append(" | ".join(row_text))
+        text = "\n".join(lines)
+        
+    # 2. Read PDF Documents (.pdf)
+    elif filename.endswith(".pdf"):
+        reader = pypdf.PdfReader(file)
+        pdf_texts = []
+        for page in reader.pages:
+            t = page.extract_text()
+            if t: pdf_texts.append(t)
+        text = "\n".join(pdf_texts)
+        
+    # 3. Read Excel Documents (.xlsx, .xls)
+    elif filename.endswith(".xlsx") or filename.endswith(".xls"):
+        xls = pd.ExcelFile(file)
+        excel_lines = []
+        for sheet in xls.sheet_names:
+            df = pd.read_excel(xls, sheet_name=sheet).fillna("")
+            excel_lines.append(f"--- Sheet: {sheet} ---")
+            for _, row in df.iterrows():
+                row_str = " | ".join([str(v) for v in row.values if str(v).strip() != ""])
+                if row_str: excel_lines.append(row_str)
+        text = "\n".join(excel_lines)
+        
+    # 4. Read Text Documents (.txt)
+    else:
+        text = file.read().decode("utf-8", errors="ignore")
+        
+    return text
+
 # ---------------------------------------------------------
 # MODULE 1: SATIŞ - HIZLI FİYATLANDIRMA TALEP DÖNÜŞTÜRÜCÜ
 # ---------------------------------------------------------
@@ -258,22 +304,6 @@ if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
                 LINE 3: CLIENT_NAME (Translated/Transliterated to UPPERCASE ENGLISH, e.g. AZIZ QATAM)
                 LINE 4: REF_CODE (Exact value provided below)
 
-                Port Dictionary Translation Rules:
-                - ازمير / إزمير -> IZMIR
-                - الحديده / الحديدة -> HODEIDAH
-                - مرسين -> MERSIN
-                - عدن -> ADEN
-                - بورسودان -> PORT SUDAN
-                - مصراتة -> MISURATA
-                - جبل علي -> JEBEL ALI
-                - أمبارلي -> AMBARLI
-                - جدة -> JEDDAH
-
-                Container Type Rules:
-                - حاويه اربعين مبرده / حاوية 40 مبردة -> 40 RF
-                - حاويه اربعين / حاوية 40 -> 40 HC
-                - حاويه عشرين / حاوية 20 -> 20 GP
-
                 Exact Reference Code for Line 4: {custom_ref}
 
                 Raw Text Input:
@@ -306,27 +336,16 @@ if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
             st.text_area("rfq_output_placeholder", value="Dönüştürülen mesaj burada görünecektir...", height=220, disabled=True, label_visibility="collapsed")
 
 # ---------------------------------------------------------
-# MODULE 2: B/L TALİMAT DÖNÜŞTÜRÜCÜ
+# MODULE 2: B/L TALİMAT DÖNÜŞTÜRÜCÜ (UNIVERSAL FILE PARSER)
 # ---------------------------------------------------------
 elif selected_tool == "📜 B/L Talimat Dönüştürücü":
     
     st.markdown("""
     <div class='awam-header'>
         <div class='awam-title'>📜 B/L Talimat (Bill of Lading Instruction) Dönüştürücü</div>
-        <div class='awam-subtitle'>Word/PDF talimatlarını yapay zeka ile okuyun, eksiklikleri kontrol edin ve Awam Excel formatında indirin.</div>
+        <div class='awam-subtitle'>Word, PDF, Excel veya TXT talimatlarını yapay zeka ile okuyun, eksiklikleri kontrol edin ve Awam Excel formatında indirin.</div>
     </div>
     """, unsafe_allow_html=True)
-
-    def read_docx_file(file):
-        doc = docx.Document(file)
-        lines = []
-        for p in doc.paragraphs:
-            if p.text.strip(): lines.append(p.text.strip())
-        for table in doc.tables:
-            for row in table.rows:
-                row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
-                if row_text: lines.append(" | ".join(row_text))
-        return "\n".join(lines)
 
     def extract_with_ai(text_content):
         client = openai.OpenAI(api_key=OPENAI_API_KEY)
@@ -353,7 +372,7 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
         )
         return json.loads(response.choices[0].message.content.strip())
 
-    uploaded_file = st.file_uploader("B/L Talimat Dosyasını Yükleyin (DOCX/TXT)", type=["docx", "txt"])
+    uploaded_file = st.file_uploader("B/L Talimat Dosyasını Yükleyin (Word / PDF / Excel / TXT)", type=["docx", "pdf", "xlsx", "xls", "txt"])
     
     col_btn1, col_btn2 = st.columns([2, 1])
     with col_btn1:
@@ -367,7 +386,7 @@ elif selected_tool == "📜 B/L Talimat Dönüştürücü":
         if uploaded_file is not None:
             with st.spinner("Doküman Analiz Ediliyor ve Ekrana Yansıtılıyor..."):
                 try:
-                    text_content = read_docx_file(uploaded_file)
+                    text_content = extract_universal_text(uploaded_file)
                     res = extract_with_ai(text_content)
                     
                     for k in bl_keys:
