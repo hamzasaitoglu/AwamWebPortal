@@ -4,24 +4,30 @@ import pandas as pd
 import io
 import json
 import datetime
+import os
 import docx
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-from openpyxl.utils import get_column_letter
 import pypdf
 import openai
+
+# ReportLab Engine for Invoices
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 
 # Safe Key Assembly for Awam Logistics System
 k1 = "sk-proj-buja6UpYkyVQEWarEe3R7VJ9m4oJkPQI8VQqV_mjqZET4BTz-iqVHVG68Xi2k1gT"
 k2 = "DUgMeAC0PTT3BlbkFJUr0mzn9BGwOBTpevsUNY7bCqt3X2uxYW-b0j5Zb38rXfV_iewleem8Ok26ymSuAIloX0JCP8cA"
 OPENAI_API_KEY = k1 + k2
 
-st.set_page_config(page_title="Awam Logistics - Operasyonel Portal", page_icon="🚢", layout="wide")
+st.set_page_config(page_title="Awam Logistics - Suite", page_icon="🚢", layout="wide")
 
-# High-Contrast Stylesheet
+# High-Contrast Design System
 st.markdown("""
 <style>
-    .stApp { background-color: #0F172A !important; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
+    .stApp { background-color: #0F172A !important; font-family: 'Inter', -apple-system, sans-serif !important; }
     [data-testid="stSidebar"] { background-color: #1E293B !important; border-right: 1px solid #334155 !important; }
     
     .brand-box {
@@ -40,13 +46,12 @@ st.markdown("""
 
     [data-testid="stFileUploader"] { background-color: #1E293B !important; border: 2px dashed #3B82F6 !important; border-radius: 12px !important; padding: 15px !important; }
     [data-testid="stFileUploader"] * { color: #FFFFFF !important; font-weight: 600 !important; }
-    [data-testid="stFileUploader"] button { background-color: #2563EB !important; color: #FFFFFF !important; border: none !important; }
-
+    
     .stRadio > label { display: none !important; }
-    .stRadio div[role="radiogroup"] { gap: 12px !important; }
+    .stRadio div[role="radiogroup"] { gap: 10px !important; }
     .stRadio div[role="radiogroup"] > label {
         background: #0F172A !important; border: 1px solid #334155 !important; border-radius: 10px !important;
-        padding: 14px 16px !important; color: #E2E8F0 !important; font-weight: 600 !important; width: 100% !important;
+        padding: 12px 14px !important; color: #E2E8F0 !important; font-weight: 600 !important; width: 100% !important;
     }
     .stRadio div[role="radiogroup"] > label[data-checked="true"] {
         background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important; border-color: #60A5FA !important; color: #FFFFFF !important;
@@ -56,334 +61,177 @@ st.markdown("""
     .awam-title { font-size: 24px; font-weight: 800; color: #FFFFFF !important; margin: 0; }
     .awam-subtitle { font-size: 13px; color: #CBD5E1 !important; margin-top: 5px; }
 
-    .card-label { font-size: 15px; font-weight: 700; color: #38BDF8 !important; margin-bottom: 12px; }
-
-    .stTextArea textarea { background-color: #0F172A !important; color: #FFFFFF !important; border: 1px solid #475569 !important; border-radius: 8px !important; font-size: 15px !important; }
+    .stTextArea textarea, .stSelectbox select { background-color: #0F172A !important; color: #FFFFFF !important; border: 1px solid #475569 !important; border-radius: 8px !important; }
     .stTextInput input { background-color: #0F172A !important; color: #38BDF8 !important; border: 1px solid #475569 !important; border-radius: 8px !important; font-weight: 700 !important; }
-
-    .stButton>button { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important; color: #FFFFFF !important; font-weight: 700 !important; border-radius: 8px !important; padding: 12px 24px !important; }
+    .stButton>button { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important; color: #FFFFFF !important; font-weight: 700 !important; border-radius: 8px !important; padding: 10px 20px !important; }
 </style>
 """, unsafe_allow_html=True)
 
+# Database Handling for Companies
+DB_FILE = "companies_db.json"
+def load_companies():
+    if os.path.exists(DB_FILE):
+        try:
+            with open(DB_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except: return []
+    return []
+
+def save_companies(data):
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+if "companies" not in st.session_state:
+    st.session_state.companies = load_companies()
+
+def generate_account_code():
+    count = len(st.session_state.companies) + 1
+    year = datetime.datetime.now().strftime("%Y")
+    return f"AWM-ACC-{year}-{count:03d}"
+
+# Invoice PDF Function
+def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, logo_path="AG-LOGO.png"):
+    pdf_buffer = io.BytesIO()
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
+    story = []
+    styles = getSampleStyleSheet()
+
+    header_company_style = ParagraphStyle('HC', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=11, leading=13, alignment=1, textColor=colors.HexColor("#0B1B3D"))
+    cell_style = ParagraphStyle('CS', parent=styles['Normal'], fontName='Helvetica', fontSize=8.5, leading=10, alignment=0)
+    cell_center = ParagraphStyle('CC', parent=cell_style, alignment=1)
+    cell_right = ParagraphStyle('CR', parent=cell_style, alignment=2)
+    th_style = ParagraphStyle('TH', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8.5, leading=10, alignment=1, textColor=colors.white)
+
+    if os.path.exists(logo_path):
+        logo = RLImage(logo_path, width=110, height=65)
+        logo.hAlign = 'CENTER'
+        story.append(logo)
+        story.append(Spacer(1, 8))
+
+    company_header_text = """
+    <b>AWAM GLOBAL LOJİSTİK TİCARET LİMİTED ŞİRKETİ</b><br/>
+    <font size=7.5><b>ADDRESS:</b> Mahmudiye Mahallesi Ertugrulgazi Caddesi No:55 ic kapi: 3 Inegol / BURSA / TURKIYE<br/>
+    <b>VN:</b> 0911212625 &nbsp;&nbsp; <b>VD:</b> INEGOL &nbsp;&nbsp; <b>EMAIL:</b> tr.finans@awamlogistics.com &nbsp;&nbsp; <b>TEL:</b> +90 224 502 8395</font>
+    """
+    story.append(Paragraph(company_header_text, header_company_style))
+    story.append(Spacer(1, 12))
+
+    cust_p = Paragraph("<b>Customer Details</b>", th_style)
+    cust_val = Paragraph(customer_info.replace('\n', '<br/>'), cell_style)
+    inv_num_th = Paragraph("Invoice Number", th_style)
+    inv_num_val = Paragraph(invoice_num, cell_center)
+    inv_date_th = Paragraph("Date", th_style)
+    inv_date_val = Paragraph(invoice_date, cell_center)
+
+    meta_table = Table([[cust_p, inv_num_th], [cust_val, inv_num_val], ['', inv_date_th], ['', inv_date_val]], colWidths=[330, 210])
+    meta_table.setStyle(TableStyle([
+        ('SPAN', (0, 0), (0, 0)), ('SPAN', (0, 1), (0, 3)),
+        ('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0B1B3D")),
+        ('BACKGROUND', (1, 0), (1, 0), colors.HexColor("#0B1B3D")),
+        ('BACKGROUND', (1, 2), (1, 2), colors.HexColor("#0B1B3D")),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0B1B3D")),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+    ]))
+    story.append(meta_table)
+    story.append(Spacer(1, 12))
+
+    items_table_data = [[Paragraph("NO", th_style), Paragraph("SHIPPER", th_style), Paragraph("DESCRIPTION", th_style), Paragraph("UNITS", th_style), Paragraph("UNIT PRICE", th_style), Paragraph("TOTAL", th_style)]]
+    subtotal = 0.0
+
+    for idx, item in enumerate(items_data, start=1):
+        units = float(item.get("units", 0))
+        unit_price = float(item.get("unit_price", 0))
+        line_total = units * unit_price
+        subtotal += line_total
+        items_table_data.append([
+            Paragraph(str(idx), cell_center),
+            Paragraph(str(item.get("shipper", "")), cell_style),
+            Paragraph(str(item.get("description", "")), cell_style),
+            Paragraph(str(int(units) if units.is_integer() else units), cell_center),
+            Paragraph(f"${unit_price:,.2f}", cell_right),
+            Paragraph(f"${line_total:,.2f}", cell_right)
+        ])
+
+    while len(items_table_data) < 8:
+        items_table_data.append([Paragraph("", cell_style)]*6)
+
+    items_table_data.append(['', '', '', '', Paragraph("<b>SUBTOTAL</b>", cell_right), Paragraph(f"<b>${subtotal:,.2f}</b>", cell_right)])
+    items_table_data.append(['', '', '', '', Paragraph("<font color='white'><b>GRAND TOTAL:</b></font>", cell_right), Paragraph(f"<font color='white'><b>${subtotal:,.2f}</b></font>", cell_right)])
+
+    items_table = Table(items_table_data, colWidths=[30, 110, 175, 55, 85, 85])
+    items_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#2B709E")),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('GRID', (0, 0), (-1, -3), 0.5, colors.HexColor("#2B709E")),
+        ('SPAN', (0, -2), (3, -2)), ('SPAN', (0, -1), (3, -1)),
+        ('BACKGROUND', (4, -1), (5, -1), colors.HexColor("#0B1B3D")),
+        ('GRID', (4, -2), (5, -1), 0.5, colors.HexColor("#0B1B3D")),
+    ]))
+    story.append(items_table)
+    story.append(Spacer(1, 15))
+    story.append(Paragraph("www.awamlogistics.com", ParagraphStyle('FT', parent=styles['Normal'], fontName='Helvetica', fontSize=8, alignment=1)))
+
+    doc.build(story)
+    pdf_buffer.seek(0)
+    return pdf_buffer
+
 # Sidebar Navigation
 with st.sidebar:
-    st.markdown("""
-    <div class='brand-box'>
-        <div class='brand-title'>AWAM LOGISTICS</div>
-        <div class='brand-sub'>Freight Forwarding Suite</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("<p style='color:#94A3B8 !important; font-size:12px; font-weight:700;'>MODÜL SEÇİMİ / SELECT MODULE</p>", unsafe_allow_html=True)
-    selected_tool = st.radio("Navigation", ["⚡ Hızlı RFQ Talep Dönüştürücü", "📜 B/L Talimat Dönüştürücü"])
+    st.markdown("<div class='brand-box'><div class='brand-title'>AWAM LOGISTICS</div><div class='brand-sub'>Freight Forwarding Suite</div></div>", unsafe_allow_html=True)
+    selected_tool = st.radio("Navigation", [
+        "⚡ Hızlı RFQ Talep Dönüştürücü",
+        "📜 B/L Talimat Dönüştürücü",
+        "🏢 الشركات المقيّدة (Company Directory)",
+        "🧾 إصدار الفواتير (Invoice Engine)"
+    ])
 
-# Session Keys Init
-bl_keys = [
-    "booking_no", "shipping_line", "vessel", "pol", "pod", "freight_terms",
-    "s_name", "s_addr", "s_tax", "s_tel", "s_email",
-    "cn_name", "cn_addr", "cn_tax", "cn_tel", "cn_email",
-    "nt_name", "nt_addr", "nt_tax", "nt_tel", "nt_email"
-]
-for k in bl_keys:
-    if k not in st.session_state: st.session_state[k] = ""
+# MODULE 4: INVOICE ENGINE
+if selected_tool == "🧾 إصدار الفواتير (Invoice Engine)":
+    st.markdown("<div class='awam-header'><div class='awam-title'>🧾 وحدة إصدار الفواتير المعتمدة (Awam Financial Invoice Engine)</div><div class='awam-subtitle'>إصدار وتوليد الفواتير المالية الرسمية بصيغة PDF ومطابقة لهوية الشعار الأزرق والحساب التلقائي.</div></div>", unsafe_allow_html=True)
 
-if "freight_terms" not in st.session_state or not st.session_state["freight_terms"]:
-    st.session_state["freight_terms"] = "FREIGHT PREPAID"
-
-if "containers" not in st.session_state:
-    st.session_state.containers = pd.DataFrame([{"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}])
-
-if "widget_version" not in st.session_state:
-    st.session_state.widget_version = 0
-
-def reset_all_fields():
-    for k in bl_keys: st.session_state[k] = ""
-    st.session_state["freight_terms"] = "FREIGHT PREPAID"
-    st.session_state.containers = pd.DataFrame([{"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}])
-    st.session_state.widget_version += 1
-
-def extract_universal_text(file):
-    filename = file.name.lower()
-    if filename.endswith(".docx"):
-        doc = docx.Document(file)
-        lines = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
-        for t in doc.tables:
-            for r in t.rows:
-                rt = [c.text.strip() for c in r.cells if c.text.strip()]
-                if rt: lines.append(" | ".join(rt))
-        return "\n".join(lines)
-    elif filename.endswith(".pdf"):
-        reader = pypdf.PdfReader(file)
-        return "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-    elif filename.endswith(".xlsx") or filename.endswith(".xls"):
-        xls = pd.ExcelFile(file)
-        lines = []
-        for s in xls.sheet_names:
-            df = pd.read_excel(xls, sheet_name=s).fillna("")
-            for _, r in df.iterrows():
-                rs = " | ".join([str(v) for v in r.values if str(v).strip() != ""])
-                if rs: lines.append(rs)
-        return "\n".join(lines)
-    else:
-        return file.read().decode("utf-8", errors="ignore")
-
-# ---------------------------------------------------------
-# MODULE 1: SATIŞ - HIZLI FİYATLANDIRMA TALEP DÖNÜŞTÜRÜCÜ
-# ---------------------------------------------------------
-if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
-    st.markdown("<div class='awam-header'><div class='awam-title'>⚡ Satış Hızlı Talep Standardizasyon Aracı (Awam Quick RFQ)</div><div class='awam-subtitle'>Müşteriden gelen ham mesajları 4 satırlık UN/LOCODE standart fiyatlandırma formatına dönüştürün.</div></div>", unsafe_allow_html=True)
-
-    now = datetime.datetime.now()
-    default_ref = f"AGL{now.strftime('%y%m%d')}{now.strftime('%H%M')}"
-
-    col_input, col_output = st.columns([1, 1], gap="large")
-
-    with col_input:
-        st.markdown("<div class='card-label'>📥 Müşteri / Satış Ham Mesajı</div>", unsafe_allow_html=True)
-        raw_text = st.text_area("raw_input_box", height=220, placeholder="ادخل الرساله هنا", label_visibility="collapsed")
+    col_meta1, col_meta2 = st.columns(2)
+    with col_meta1:
+        inv_num = st.text_input("رقم الفاتورة (Invoice Number)", value="INV-2401")
         
-        r_col1, r_col2 = st.columns([1.2, 1])
-        with r_col1: custom_ref = st.text_input("Referans Kodu", value=default_ref, label_visibility="collapsed")
-        with r_col2: process_btn = st.button("⚡ Hızlı Çevir", use_container_width=True)
+        # Company Selector Integration
+        companies_list = [c["اسم الشركة"] for c in st.session_state.companies]
+        selected_comp = st.selectbox("اختر شركة مقيدة في السجل (أو أدخل يدوياً):", ["-- إدخال يدوي --"] + companies_list)
+        
+        default_cust_text = "Awam Global Cannealan tinerey\nBURSA / TURKIYE\nVN: 1234567890"
+        if selected_comp != "-- إدخال يدوي --":
+            comp_obj = next((c for c in st.session_state.companies if c["اسم الشركة"] == selected_comp), None)
+            if comp_obj:
+                default_cust_text = f"{comp_obj['اسم الشركة']}\n{comp_obj['العنوان']}\nVN: {comp_obj['الرقم الضريبي']}  VD: {comp_obj['المكتب الضريبي']}"
 
-    if process_btn and raw_text.strip():
-        with st.spinner("AI Analiz Ediyor ve Awam Standartına Getiriyor..."):
-            try:
-                client = openai.OpenAI(api_key=OPENAI_API_KEY)
-                prompt = f"""
-                You are an expert Freight Forwarding speed-parser for Awam Logistics.
-                Convert the raw request into a STRICT 4-LINE UPPERCASE ENGLISH MESSAGE.
-                DO NOT USE ANY BRACKETS LIKE [POL], [POD], [QTY] OR LABELS. OUTPUT ONLY THE VALUES.
+        cust_info = st.text_area("بيانات العميل (Customer Details)", value=default_cust_text, height=100)
 
-                LINE 1: [POL_NAME / TURKISH_ORIGIN] [POD_NAME]
-                LINE 2: [QUANTITY]X[CONTAINER_TYPE]
-                LINE 3: [CLIENT_NAME_IN_ENGLISH]
-                LINE 4: [REF_CODE]
+    with col_meta2:
+        inv_date = st.date_input("تاريخ الفاتورة (Date)", value=datetime.date.today()).strftime("%d.%m.%Y")
 
-                TURKISH CITIES, DISTRICTS & PORTS DICTIONARY:
-                - أرنؤوط كوي / ارنفوتكوي / ارناؤوط كوي -> ARNAVUTKOY (ISTANBUL)
-                - أمبارلي / امبارلي -> AMBARLI
-                - إزميت / ازميت / كوجالي -> IZMIT
-                - إزمير / ازمير -> IZMIR
-                - مرسين -> MERSIN
-                - اسكندرون / إسكندرون -> ISKENDERUN
-                - غازي عنتاب / عنتاب -> GAZIANTEP
-                - بورصة / بورصه -> BURSA
-                - قونية / قونيا -> KONYA
-                - قيصري -> KAYSERI
-                - جيمليك -> GEMLIK
-                - إيفياب -> EVYAP
-                - حيدر باشا -> HAYDARPASA
+    st.subheader("📦 بنود الفاتورة (Invoice Line Items)")
+    init_df = pd.DataFrame([
+        {"shipper": "Awam Global Cannealan tinerey", "description": "Sample Shipping Packet, BURSA / Turkiye", "units": 100.0, "unit_price": 30.0},
+        {"shipper": "Awam Btunuk Kamen", "description": "Sample Shipping Packet, BURSA / Turkiye", "units": 10.0, "unit_price": 25.0},
+        {"shipper": "Awam Global Cannealan tinerey", "description": "Sample Shipping Packet, BURSA / Turkiye", "units": 5.0, "unit_price": 25.0},
+        {"shipper": "Mvr", "description": "Sample Shipping Packet, BURSA / Turkiye", "units": 1.0, "unit_price": 30.0}
+    ])
 
-                GLOBAL DESTINATION PORTS DICTIONARY:
-                - عدن -> ADEN
-                - الحديدة / الحديده -> HODEIDAH
-                - بورسودان / بورتسودان -> PORT SUDAN
-                - مصراتة / مصراته -> MISURATA
-                - طرابلس -> TRIPOLI
-                - بنغازي -> BENGHAZI
-                - جبل علي -> JEBEL ALI
-                - جدة / جده -> JEDDAH
-                - العقبة / العقبه -> AQABA
+    edited_invoice_df = st.data_editor(init_df, num_rows="dynamic", use_container_width=True)
 
-                EQUIPMENT RULES:
-                - "ثلاث اربعين" or "3 اربعين" -> 3X40 HC
-                - "حاويه اربعين" -> 1X40 HC
-                - "ثلاث عشرين" -> 3X20 GP
-                - "حاويه عشرين" -> 1X20 GP
-                - "مبرده" -> RF
-
-                Exact Ref Code for Line 4: {custom_ref}
-
-                Raw Text Input:
-                {raw_text}
-                """
-                response = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
-                st.session_state["rfq_result"] = response.choices[0].message.content.strip()
-            except Exception as e:
-                st.error(f"Hata: {str(e)}")
-
-    with col_output:
-        st.markdown("<div class='card-label'>📤 Hazır Standart Mesaj</div>", unsafe_allow_html=True)
-        if "rfq_result" in st.session_state:
-            st.text_area("rfq_output_box", value=st.session_state["rfq_result"], height=220, label_visibility="collapsed")
-            text_to_copy = json.dumps(st.session_state["rfq_result"])
-            copy_button_html = f"""<div style="margin-top: 10px;"><button id="copyBtn" onclick="navigator.clipboard.writeText({text_to_copy})" style="width: 100%; background: #16A34A; color: white; font-weight: bold; border: none; padding: 12px; border-radius: 8px; cursor: pointer;">📋 Metni Doğrudan Kopyala (Copy Result)</button></div>"""
-            components.html(copy_button_html, height=65)
-        else:
-            st.text_area("rfq_output_placeholder", value="Dönüştürülen mesaj burada görünecektir...", height=220, disabled=True, label_visibility="collapsed")
-
-# ---------------------------------------------------------
-# MODULE 2: B/L TALİMAT DÖNÜŞTÜRÜCÜ
-# ---------------------------------------------------------
-elif selected_tool == "📜 B/L Talimat Dönüştürücü":
-    st.markdown("<div class='awam-header'><div class='awam-title'>📜 B/L Talimat (Bill of Lading Instruction) Dönüştürücü</div><div class='awam-subtitle'>Word, PDF, Excel veya TXT talimatlarını yapay zeka ile okuyun ve Awam Excel formatında indirin.</div></div>", unsafe_allow_html=True)
-
-    def extract_with_ai(text_content):
-        client = openai.OpenAI(api_key=OPENAI_API_KEY)
-        prompt = f"""
-        Parse B/L instruction text into JSON:
-        {{
-            "booking_no": "", "shipping_line": "", "vessel": "", "pol": "", "pod": "", "freight_terms": "FREIGHT PREPAID",
-            "s_name": "", "s_addr": "", "s_tax": "", "s_tel": "", "s_email": "",
-            "cn_name": "", "cn_addr": "", "cn_tax": "", "cn_tel": "", "cn_email": "",
-            "nt_name": "", "nt_addr": "", "nt_tax": "", "nt_tel": "", "nt_email": "",
-            "containers": [{"Container No": "", "Seal No": "", "Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}]
-        }}
-        Text: {text_content}
-        """
-        response = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], response_format={"type": "json_object"})
-        return json.loads(response.choices[0].message.content.strip())
-
-    uploaded_file = st.file_uploader("B/L Talimat Dosyasını Yükleyin (Word / PDF / Excel / TXT)", type=["docx", "pdf", "xlsx", "xls", "txt"])
-    
-    col_btn1, col_btn2 = st.columns([2, 1])
-    with col_btn1: process_doc_btn = st.button("🚀 AI ile Oku ve Doldur", type="primary", use_container_width=True)
-    with col_btn2:
-        if st.button("🔄 Yeni İşlem / Sıfırla (Reset)", use_container_width=True):
-            reset_all_fields()
-            st.rerun()
-
-    if process_doc_btn:
-        if uploaded_file is not None:
-            with st.spinner("Doküman Analiz Ediliyor..."):
-                try:
-                    text_content = extract_universal_text(uploaded_file)
-                    res = extract_with_ai(text_content)
-                    for k in bl_keys:
-                        if k in res: st.session_state[k] = str(res[k]) if res[k] else ""
-                    if "containers" in res and res["containers"]:
-                        st.session_state.containers = pd.DataFrame(res["containers"])
-                    st.session_state.widget_version += 1
-                    st.success("✅ Tüm Bilgiler Ekran ve Excel İçin Başarıyla Senkronize Edildi!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Hata: {str(e)}")
-
-    v = st.session_state.widget_version
-
-    st.subheader("📋 Genel Sevkiyat Bilgileri")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.session_state["booking_no"] = st.text_input("Booking No", value=st.session_state.get("booking_no", ""), key=f"bk_{v}")
-        st.session_state["shipping_line"] = st.text_input("Shipping Line", value=st.session_state.get("shipping_line", ""), key=f"sl_{v}")
-    with col2:
-        st.session_state["vessel"] = st.text_input("Vessel & Voyage", value=st.session_state.get("vessel", ""), key=f"vs_{v}")
-        st.session_state["freight_terms"] = st.text_input("Freight Terms", value=st.session_state.get("freight_terms", "FREIGHT PREPAID"), key=f"ft_{v}")
-    with col3:
-        st.session_state["pol"] = st.text_input("POL (Port of Loading)", value=st.session_state.get("pol", ""), key=f"pol_{v}")
-        st.session_state["pod"] = st.text_input("POD (Port of Discharge)", value=st.session_state.get("pod", ""), key=f"pod_{v}")
-
-    st.subheader("👥 Partiler (Shipper / Consignee / Notify)")
-    st.markdown("**1. SHIPPER / YÜKLEYİCİ**")
-    c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
-    with c1: st.session_state["s_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("s_name", ""), key=f"sn_{v}")
-    with c2: st.session_state["s_addr"] = st.text_input("ADDRESS", value=st.session_state.get("s_addr", ""), key=f"sa_{v}")
-    with c3: st.session_state["s_tax"] = st.text_input("TAX NUMBER", value=st.session_state.get("s_tax", ""), key=f"st_{v}")
-    with c4: st.session_state["s_tel"] = st.text_input("TEL", value=st.session_state.get("s_tel", ""), key=f"stp_{v}")
-    with c5: st.session_state["s_email"] = st.text_input("EMAIL", value=st.session_state.get("s_email", ""), key=f"se_{v}")
-
-    st.markdown("**2. CONSIGNEE / ALICI**")
-    c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
-    with c1: st.session_state["cn_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("cn_name", ""), key=f"cnn_{v}")
-    with c2: st.session_state["cn_addr"] = st.text_input("ADDRESS", value=st.session_state.get("cn_addr", ""), key=f"cna_{v}")
-    with c3: st.session_state["cn_tax"] = st.text_input("TAX NUMBER", value=st.session_state.get("cn_tax", ""), key=f"cnt_{v}")
-    with c4: st.session_state["cn_tel"] = st.text_input("TEL", value=st.session_state.get("cn_tel", ""), key=f"cntp_{v}")
-    with c5: st.session_state["cn_email"] = st.text_input("EMAIL", value=st.session_state.get("cn_email", ""), key=f"cne_{v}")
-
-    st.markdown("**3. NOTIFY / İHBAR TARAF**")
-    c1, c2, c3, c4, c5 = st.columns([1.5, 2, 1.2, 1.2, 1.5])
-    with c1: st.session_state["nt_name"] = st.text_input("COMPANY NAME", value=st.session_state.get("nt_name", ""), key=f"ntn_{v}")
-    with c2: st.session_state["nt_addr"] = st.text_input("ADDRESS", value=st.session_state.get("nt_addr", ""), key=f"nta_{v}")
-    with c3: st.session_state["nt_tax"] = st.text_input("TAX NUMBER", value=st.session_state.get("nt_tax", ""), key=f"ntt_{v}")
-    with c4: st.session_state["nt_tel"] = st.text_input("TEL", value=st.session_state.get("nt_tel", ""), key=f"nttp_{v}")
-    with c5: st.session_state["nt_email"] = st.text_input("EMAIL", value=st.session_state.get("nt_email", ""), key=f"nte_{v}")
-
-    st.subheader("📦 Konteyner ve Yük Detayları")
-    edited_df = st.data_editor(st.session_state.containers, num_rows="dynamic", use_container_width=True, key=f"de_{v}")
-
-    total_containers = len(edited_df[edited_df["Container No"].astype(str).str.strip() != ""])
-    total_weight = edited_df["Gross Weight (KG)"].apply(lambda x: pd.to_numeric(x, errors='coerce')).sum()
-    total_cbm = edited_df["Volume (CBM)"].apply(lambda x: pd.to_numeric(x, errors='coerce')).sum()
-
-    st.markdown("### 📊 Totals Summary")
-    s1, s2, s3 = st.columns(3)
-    with s1: st.markdown(f"**Containers:** {total_containers}")
-    with s2: st.markdown(f"**Total Weight:** {total_weight:,.2f} KG")
-    with s3: st.markdown(f"**Total Volume:** {total_cbm:,.2f} CBM")
-
-    def generate_excel():
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "B-L Talimat"
-        ws.views.sheetView[0].showGridLines = True
-        NAVY_FILL = PatternFill(start_color="1A365D", end_color="1A365D", fill_type="solid")
-        BLUE_FILL = PatternFill(start_color="2B6CB0", end_color="2B6CB0", fill_type="solid")
-        GRAY_FILL = PatternFill(start_color="EDF2F7", end_color="EDF2F7", fill_type="solid")
-        BORDER_BOX = Border(left=Side(style="thin", color="CBD5E0"), right=Side(style="thin", color="CBD5E0"), top=Side(style="thin", color="CBD5E0"), bottom=Side(style="thin", color="CBD5E0"))
-
-        ws.merge_cells("A1:G1")
-        ws["A1"] = "AWAM LOGISTICS - BILL OF LADING INSTRUCTION (B/L TALİMAT)"
-        ws["A1"].font = Font(name="Calibri", size=15, bold=True, color="FFFFFF")
-        ws["A1"].fill = NAVY_FILL
-        ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
-
-        ws.merge_cells("A2:G2")
-        ws["A2"] = "Official Shipping Instruction Document | www.awamlogistics.com"
-        ws["A2"].font = Font(name="Calibri", size=10, italic=True, color="FFFFFF")
-        ws["A2"].fill = BLUE_FILL
-        ws["A2"].alignment = Alignment(horizontal="center", vertical="center")
-
-        info_list = [("Booking No:", st.session_state.booking_no), ("Shipping Line:", st.session_state.shipping_line), ("Vessel & Voyage:", st.session_state.vessel), ("POL (Loading Port):", st.session_state.pol), ("POD (Discharge Port):", st.session_state.pod), ("Freight Terms:", st.session_state.freight_terms)]
-        for idx, (lbl, val) in enumerate(info_list, start=4):
-            ws.merge_cells(start_row=idx, start_column=1, end_row=idx, end_column=2)
-            ws.cell(row=idx, column=1, value=lbl).font = Font(bold=True, size=10)
-            ws.cell(row=idx, column=1).fill = GRAY_FILL
-            ws.merge_cells(start_row=idx, start_column=3, end_row=idx, end_column=7)
-            ws.cell(row=idx, column=3, value=val).font = Font(size=10)
-            for c in range(1, 8): ws.cell(row=idx, column=c).border = BORDER_BOX
-
-        def add_party_rows(start_row, title, name, addr, tax, tel, email):
-            ws.merge_cells(start_row=start_row, start_column=1, end_row=start_row, end_column=7)
-            ws.cell(row=start_row, column=1, value=title).font = Font(bold=True, size=10, color="1A365D")
-            ws.cell(row=start_row, column=1).fill = GRAY_FILL
-            rows_data = [("Company Name", name), ("Address", addr), ("Tax Number / CR No", tax), ("Tel", tel), ("Email", email)]
-            for offset, (lbl, val) in enumerate(rows_data, start=1):
-                r = start_row + offset
-                c_lbl = ws.cell(row=r, column=1, value=lbl)
-                c_lbl.font = Font(size=10, italic=True)
-                ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=7)
-                ws.cell(row=r, column=2, value=val).font = Font(size=10)
-                for col in range(1, 8): ws.cell(row=r, column=col).border = BORDER_BOX
-
-        add_party_rows(11, "1. SHIPPER DETAILS", st.session_state.s_name, st.session_state.s_addr, st.session_state.s_tax, st.session_state.s_tel, st.session_state.s_email)
-        add_party_rows(17, "2. CONSIGNEE DETAILS", st.session_state.cn_name, st.session_state.cn_addr, st.session_state.cn_tax, st.session_state.cn_tel, st.session_state.cn_email)
-        add_party_rows(23, "3. NOTIFY PARTY DETAILS", st.session_state.nt_name, st.session_state.nt_addr, st.session_state.nt_tax, st.session_state.nt_tel, st.session_state.nt_email)
-
-        headers = ["Container No", "Seal No", "Type", "Packages", "Description of Goods", "Gross Weight (KG)", "Volume (CBM)"]
-        for c_i, h in enumerate(headers, 1):
-            cell = ws.cell(row=29, column=c_i, value=h)
-            cell.font = Font(bold=True, color="FFFFFF", size=10)
-            cell.fill = BLUE_FILL
-            cell.border = BORDER_BOX
-
-        curr_row = 30
-        for idx, row in edited_df.iterrows():
-            ws.cell(row=curr_row, column=1, value=row["Container No"])
-            ws.cell(row=curr_row, column=2, value=row["Seal No"])
-            ws.cell(row=curr_row, column=3, value=row["Type"])
-            ws.cell(row=curr_row, column=4, value=row["Packages"])
-            ws.cell(row=curr_row, column=5, value=row["Description"])
-            ws.cell(row=curr_row, column=6, value=float(row["Gross Weight (KG)"] if row["Gross Weight (KG)"] else 0)).number_format = '#,##0.00'
-            ws.cell(row=curr_row, column=7, value=float(row["Volume (CBM)"] if row["Volume (CBM)"] else 0)).number_format = '#,##0.00'
-            for c in range(1, 8): ws.cell(row=curr_row, column=c).border = BORDER_BOX
-            curr_row += 1
-
-        output = io.BytesIO()
-        wb.save(output)
-        return output.getvalue()
-
-    st.markdown("---")
-    excel_data = generate_excel()
-    b_no = st.session_state.booking_no
-    st.download_button("📥 B/L Talimat Excel Dosyasını İndir (Awam Mavi Format)", data=excel_data, file_name=f"BL_Talimat_{b_no if b_no else 'New'}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+    if st.button("🚀 إصدار الفاتورة وتوليد PDF", type="primary"):
+        pdf_out = build_pdf_invoice(
+            invoice_num=inv_num,
+            invoice_date=inv_date,
+            customer_info=cust_info,
+            items_data=edited_invoice_df.to_dict(orient="records"),
+            logo_path="AG-LOGO.png"
+        )
+        st.download_button(
+            label="📥 تحميل الفاتورة الرسمية PDF (Awam Invoice)",
+            data=pdf_out,
+            file_name=f"Invoice_{inv_num}.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+        st.success("✅ تم توليد الفاتورة بنجاح ومطابقة كامل البيانات!")
