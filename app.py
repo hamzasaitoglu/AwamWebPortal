@@ -11,15 +11,11 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 import pypdf
 import openai
 
-# ReportLab Integration with Exception Catching for Awam Logistics
-try:
-    from reportlab.lib.pagesizes import letter
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib import colors
-    REPORTLAB_AVAILABLE = True
-except ImportError:
-    REPORTLAB_AVAILABLE = False
+# ReportLab Integration
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 
 # Safe Key Assembly for Awam Logistics System
 k1 = "sk-proj-buja6UpYkyVQEWarEe3R7VJ9m4oJkPQI8VQqV_mjqZET4BTz-iqVHVG68Xi2k1gT"
@@ -28,7 +24,6 @@ OPENAI_API_KEY = k1 + k2
 
 st.set_page_config(page_title="Awam Logistics - Operasyonel Portal", page_icon="🚢", layout="wide")
 
-# High-Contrast Design System for Awam Logistics
 st.markdown("""
 <style>
     .stApp { background-color: #0F172A !important; font-family: 'Inter', sans-serif !important; }
@@ -67,7 +62,6 @@ def generate_account_code():
     year = datetime.datetime.now().strftime("%Y")
     return f"AWM-ACC-{year}-{count:03d}"
 
-# Helper to clean text and eliminate NaN
 def sanitize_text(val):
     if pd.isna(val) or val is None:
         return ""
@@ -83,7 +77,7 @@ def sanitize_text(val):
         val_str = val_str.replace(search, replace)
     return val_str
 
-# PDF Invoice Engine with Perfect Spacing & Bottom Fixed Footer
+# ReportLab PDF Engine
 def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_amount=0.0, logo_path="AG-LOGO.png"):
     pdf_buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -114,14 +108,12 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
     cell_right = ParagraphStyle('CR', parent=cell_style, alignment=2)
     th_style = ParagraphStyle('TH', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8.5, leading=10, alignment=1, textColor=colors.white)
 
-    # 1. Logo
     if os.path.exists(logo_path):
         logo = RLImage(logo_path, width=110, height=60)
         logo.hAlign = 'CENTER'
         story.append(logo)
         story.append(Spacer(1, 8))
 
-    # 2. Header Text
     comp_title = sanitize_text("AWAM GLOBAL LOJISTIK TICARET LIMITED SIRKETI")
     comp_address = sanitize_text("ADDRESS: Mahmudiye Mahallesi Ertugrulgazi Caddesi No:55 ic kapi: 3 Inegol / BURSA / TURKIYE")
     
@@ -136,7 +128,6 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
     story.append(Paragraph(header_info, header_sub_style))
     story.append(Spacer(1, 14))
 
-    # 3. Customer Details & Invoice Number (Separated Top Boxes)
     cust_clean = sanitize_text(customer_info).replace('\n', '<br/>')
     
     cust_table_data = [
@@ -178,7 +169,6 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
     story.append(meta_wrapper)
     story.append(Spacer(1, 14))
 
-    # 4. Line Items Table (With Spaced Empty Rows)
     items_table_data = [[
         Paragraph("NO", th_style),
         Paragraph("SHIPPER", th_style),
@@ -188,7 +178,7 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
         Paragraph("TOTAL", th_style)
     ]]
 
-    row_heights = [20] # Header height
+    row_heights = [20]
     subtotal = 0.0
     valid_row_index = 1
 
@@ -216,10 +206,9 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
             Paragraph(f"${unit_price:,.2f}", cell_right),
             Paragraph(f"${line_total:,.2f}", cell_right)
         ])
-        row_heights.append(None) # Auto height for filled rows
+        row_heights.append(None)
         valid_row_index += 1
 
-    # Fill empty rows up to 7 items with clean 24pt height spacing
     while len(items_table_data) < 8:
         items_table_data.append([
             Paragraph("", cell_style),
@@ -229,11 +218,10 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
             Paragraph("", cell_style),
             Paragraph("", cell_style)
         ])
-        row_heights.append(24) # 24pt fixed height for spacious empty rows
+        row_heights.append(24)
 
     grand_total = subtotal + tax_amount
 
-    # Financial Summary Rows
     items_table_data.append(['', '', '', '', Paragraph("<b>SUBTOTAL</b>", cell_right), Paragraph(f"<b>${subtotal:,.2f}</b>", cell_right)])
     row_heights.append(20)
     items_table_data.append(['', '', '', '', Paragraph("<b>TAX</b>", cell_right), Paragraph(f"<b>${tax_amount:,.2f}</b>", cell_right)])
@@ -254,15 +242,12 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
     ]))
     story.append(items_table)
 
-    # 5. Canvas Callback: Draw Page Border & Pin Website Footer to Bottom of Page
     def draw_page_decorations(canvas, doc):
         canvas.saveState()
-        # Outer Border Box
         canvas.setStrokeColor(colors.HexColor("#0B1B3D"))
         canvas.setLineWidth(1)
         canvas.rect(18, 18, 576, 756)
         
-        # Pinned Website Footer Text at Bottom (y=28pt)
         canvas.setFont("Helvetica", 8.5)
         canvas.setFillColor(colors.HexColor("#1A2530"))
         canvas.drawCentredString(306, 28, "www.awamlogistics.com")
@@ -383,4 +368,4 @@ elif selected_tool == "🧾 إصدار الفواتير (Invoice Engine)":
             mime="application/pdf",
             use_container_width=True
         )
-        st.success("✅ تم إصدار الفاتورة وتحديث المسافات والتنسيق في القاع بنجاح!")
+        st.success("✅ تم إصدار الفاتورة بنجاح!")
