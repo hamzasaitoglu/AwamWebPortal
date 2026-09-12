@@ -83,7 +83,6 @@ st.markdown("""
 if "device_authenticated" not in st.session_state:
     st.session_state.device_authenticated = False
 
-# Auto-Bypass for Localhost / Authorized Signature Link
 query_params = st.query_params
 if (
     st.session_state.device_authenticated
@@ -93,21 +92,13 @@ if (
 ):
     st.session_state.device_authenticated = True
 
-# Silent Auto-Registration on Local Machine
 if not st.session_state.device_authenticated:
-    # Auto-authorize local environment
     with open(".authorized_device", "w") as f:
         f.write(MASTER_HARDWARE_UUID)
     st.session_state.device_authenticated = True
     st.rerun()
 
-# Blocking Shield for External / Unauthorized Devices
-if not st.session_state.device_authenticated:
-    st.markdown("<div class='brand-box' style='max-width: 520px; margin: 50px auto;'><div class='brand-title'>AWAM LOGISTICS</div><div class='brand-sub'>Restricted Access</div></div>", unsafe_allow_html=True)
-    st.error("⛔ ACCESS BLOCKED: Unregistered device. This portal is locked to authorized Awam Logistics PCs.")
-    st.stop()
-
-# --- OPERATIONAL PORTAL SUITE (RUNS IMMEDIATELY FOR GHAMDAN MAC) ---
+# --- OPERATIONAL PORTAL SUITE ---
 
 @st.cache_data(ttl=60)
 def load_companies_fast():
@@ -288,35 +279,19 @@ if selected_tool == "⚡ Quick RFQ Standardization Tool":
                     Line 1: ORIGIN_CITY - DESTINATION_CITY [(INCOTERM if mentioned)] [(IMO if flammable/dangerous)]
                     Line 2: QUANTITY x CONTAINER_TYPE
                     Line 3: {ref_id}
-                    Line 4: CLIENT_NAME_IN_ENGLISH_UPPERCASE (If missing, write EXACTLY: MISSING_CLIENT_NAME)
+                    Line 4: CLIENT_NAME_IN_ENGLISH_UPPERCASE
 
-                    STRICT CONTAINER TYPE DEFINITIONS:
+                    CRITICAL CLIENT NAME RULES:
+                    - Any single word or name written at the end of the text or on a new line (e.g., علي, علي بن علي, أحمد, عبدالمجيد) MUST be recognized as the CLIENT NAME.
+                    - Convert Arabic names to clear English uppercase (e.g., علي -> ALI, عبدالمجيد -> ABDULMAJEED).
+                    - ONLY output "MISSING_CLIENT_NAME" if the message contains absolutely no personal name.
+
+                    CRITICAL CONTAINER RULES:
                     - 20ft Dry -> "20DC"
                     - 40ft High Cube / Standard Dry -> "40HC"
                     - 40ft Reefer -> "40 REEFER"
-
-                    CRITICAL ARABIC QUANTITY & CONTAINER SIZE DISAMBIGUATION RULES:
-                    1. "اربع اربعين" or "أربع أربعين" or "4 اربعين" -> QUANTITY is 4, SIZE is 40ft -> Output: "4X40 HC"
-                    2. "ثلاث اربعين" or "3 اربعين" -> QUANTITY is 3, SIZE is 40ft -> Output: "3X40 HC"
-                    3. "خمس عشرين" or "5 عشرين" -> QUANTITY is 5, SIZE is 20ft -> Output: "5X20 DC"
-                    4. "اربعين" or "سعر الاربعين" (without preceding quantity number) -> QUANTITY is 1, SIZE is 40ft -> Output: "1X40 HC"
-                    5. "عشرين" or "سعر العشرين" (without preceding quantity number) -> QUANTITY is 1, SIZE is 20ft -> Output: "1X20 DC"
-                    6. "اربع اربعين مبرد" -> Output: "4X40 REEFER"
-
-                    EXAMPLES FOR ACCURACY:
-                    Input: "اربييد اربع اربعين من جده لعدن الادريسي"
-                    Output:
-                    JEDDAH - ADEN
-                    4X40 HC
-                    {ref_id}
-                    AL-ADRAISI
-
-                    Input: "اريد سعر العشرين من ازمير لعدن فوب عبدالمجيد"
-                    Output:
-                    IZMIR - ADEN (FOB)
-                    1X20 DC
-                    {ref_id}
-                    ABDULMAJEED
+                    - "اربعين" or "سعر الاربعين" = 1X40 HC
+                    - "عشرين" or "سعر العشرين" = 1X20 DC
 
                     Raw Input to Parse:
                     "{raw_message}"
@@ -343,6 +318,7 @@ if selected_tool == "⚡ Quick RFQ Standardization Tool":
         if "rfq_result" in st.session_state:
             st.code(st.session_state["rfq_result"], language="text")
             st.caption("📋 Click the copy icon on the top right of the box above to copy output instantly.")
+
 # MODULE 2: B/L CONVERTER
 elif selected_tool == "📜 B/L Instruction Converter":
     st.markdown("<div class='awam-header'><div class='awam-title'>📜 Bill of Lading (B/L) Instruction Converter</div><div class='awam-subtitle'>Extract Shipping Instructions from PDF/Excel/Word files directly into standardized dispatch tables.</div></div>", unsafe_allow_html=True)
