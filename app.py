@@ -14,15 +14,15 @@ k1 = "sk-proj-buja6UpYkyVQEWarEe3R7VJ9m4oJkPQI8VQqV_mjqZET4BTz-iqVHVG68Xi2k1gT"
 k2 = "DUgMeAC0PTT3BlbkFJUr0mzn9BGwOBTpevsUNY7bCqt3X2uxYW-b0j5Zb38rXfV_iewleem8Ok26ymSuAIloX0JCP8cA"
 OPENAI_API_KEY = k1 + k2
 
-st.set_page_config(page_title="Awam Logistics - Suite", page_icon="🚢", layout="wide")
+st.set_page_config(page_title="Awam Logistics - Operations Portal", page_icon="🚢", layout="wide")
 
-# High-Performance Light Theme System
+# High-Performance Light Corporate Design System
 st.markdown("""
 <style>
     html, body, .stApp, [data-testid="stAppViewContainer"] {
         background-color: #F8FAFC !important;
         color: #0F172A !important;
-        font-family: 'Inter', sans-serif !important;
+        font-family: 'Inter', -apple-system, sans-serif !important;
     }
     [data-testid="stSidebar"] {
         background-color: #FFFFFF !important;
@@ -35,7 +35,7 @@ st.markdown("""
         text-align: center;
         margin-bottom: 20px;
     }
-    .brand-title { font-size: 18px; font-weight: 800; color: #FFFFFF !important; margin: 0; }
+    .brand-title { font-size: 18px; font-weight: 800; color: #FFFFFF !important; margin: 0; letter-spacing: 0.5px; }
     .brand-sub { font-size: 10px; color: #93C5FD !important; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
     .awam-header { 
         background-color: #FFFFFF !important; 
@@ -218,26 +218,26 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
 with st.sidebar:
     st.markdown("<div class='brand-box'><div class='brand-title'>AWAM LOGISTICS</div><div class='brand-sub'>Freight Forwarding Suite</div></div>", unsafe_allow_html=True)
     selected_tool = st.radio("Navigation", [
-        "⚡ Hızlı RFQ Talep Dönüştürücü",
-        "📜 B/L Talimat Dönüştürücü",
-        "🏢 الشركات المقيّدة (Company Directory)",
-        "🧾 إصدار الفواتير (Invoice Engine)"
+        "⚡ Quick RFQ Standardization Tool",
+        "📜 B/L Instruction Converter",
+        "🏢 Registered Companies Directory",
+        "🧾 Awam Invoice Engine"
     ])
 
-# MODULE 1: RFQ
-if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
-    st.markdown("<div class='awam-header'><div class='awam-title'>⚡ Satış Hızlı Talep Standardizasyon Aracı (Awam Quick RFQ)</div><div class='awam-subtitle'>Müşteriden gelen ham mesajları 4 satırlık UN/LOCODE standart fiyatlandırma formatına dönüştürün.</div></div>", unsafe_allow_html=True)
+# MODULE 1: RFQ CONVERTER
+if selected_tool == "⚡ Quick RFQ Standardization Tool":
+    st.markdown("<div class='awam-header'><div class='awam-title'>⚡ Quick RFQ Standardization Tool (Awam Quick RFQ)</div><div class='awam-subtitle'>Convert raw WhatsApp/Email client messages into standardized 4-line UN/LOCODE freight pricing queries.</div></div>", unsafe_allow_html=True)
     now = datetime.datetime.now()
     default_ref = f"AGL{now.strftime('%y%m%d')}{now.strftime('%H%M')}"
     col_input, col_output = st.columns([1, 1], gap="large")
     with col_input:
-        raw_text = st.text_area("نص الطلب الخام:", height=200, placeholder="ادخل نص الطلب هنا...")
+        raw_text = st.text_area("Raw Client Request Message:", height=200, placeholder="Paste raw WhatsApp message or email text here...")
         r_col1, r_col2 = st.columns([1.2, 1])
-        with r_col1: custom_ref = st.text_input("كود المرجعية", value=default_ref)
-        with r_col2: process_btn = st.button("⚡ تحويل فوري", use_container_width=True)
+        with r_col1: custom_ref = st.text_input("Reference Code", value=default_ref)
+        with r_col2: process_btn = st.button("⚡ Convert Instantly", use_container_width=True)
 
     if process_btn and raw_text.strip():
-        with st.spinner("جاري المعالجة..."):
+        with st.spinner("Processing request..."):
             try:
                 client = openai.OpenAI(api_key=OPENAI_API_KEY)
                 prompt = f"Parse for Awam Logistics: {raw_text}. Ref: {custom_ref}"
@@ -247,31 +247,36 @@ if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
 
     with col_output:
         if "rfq_result" in st.session_state:
-            st.text_area("النتيجة القياسية:", value=st.session_state["rfq_result"], height=200)
+            st.text_area("Standardized Output:", value=st.session_state["rfq_result"], height=200)
+
+# MODULE 2: B/L CONVERTER
+elif selected_tool == "📜 B/L Instruction Converter":
+    st.markdown("<div class='awam-header'><div class='awam-title'>📜 Bill of Lading (B/L) Instruction Converter</div><div class='awam-subtitle'>Extract Shipping Instructions from PDF/Excel/Word files directly into standardized dispatch tables.</div></div>", unsafe_allow_html=True)
+    st.info("Upload shipping documents to extract container details, Shipper, Consignee, and HS Codes.")
 
 # MODULE 3: COMPANY DIRECTORY
-elif selected_tool == "🏢 الشركات المقيّدة (Company Directory)":
-    st.markdown("<div class='awam-header'><div class='awam-title'>🏢 وحدة إدارة وتقييد الشركات (Awam Directory Engine)</div><div class='awam-subtitle'>تسجيل وتقييد العملاء، الخطوط الملاحية، والموردين بجدول موحد.</div></div>", unsafe_allow_html=True)
-    tab1, tab2 = st.tabs(["➕ إضافة شركة جديدة", "📋 سجل الشركات المقيّدة"])
+elif selected_tool == "🏢 Registered Companies Directory":
+    st.markdown("<div class='awam-header'><div class='awam-title'>🏢 Company Directory Engine (Awam Directory)</div><div class='awam-subtitle'>Manage and register Shippers, Consignees, Shipping Lines, and Subcontractors.</div></div>", unsafe_allow_html=True)
+    tab1, tab2 = st.tabs(["➕ Register New Company", "📋 Registered Directory Ledger"])
     with tab1:
         with st.form("comp_form", clear_on_submit=True):
             c1, c2 = st.columns(2)
             with c1:
-                acc_code = st.text_input("الكود المحاسبي", value=generate_account_code())
-                comp_name = st.text_input("اسم الشركة *")
-                comp_type = st.selectbox("نوع الشركة", ["عميل / Shipper / Consignee", "خط ملاحي / Shipping Line", "مورد نقل داخلي / Hauler", "مخلص جمركي / Customs Broker"])
-                email = st.text_input("البريد الإلكتروني")
+                acc_code = st.text_input("Account Code", value=generate_account_code())
+                comp_name = st.text_input("Company Name *")
+                comp_type = st.selectbox("Company Category", ["Client / Shipper / Consignee", "Shipping Line / Carrier", "Hauler / Internal Trucking", "Customs Broker"])
+                email = st.text_input("Email Address")
             with c2:
-                phone = st.text_input("رقم الهاتف")
-                tax_num = st.text_input("الرقم الضريبي")
-                tax_office = st.text_input("المكتب الضريبي")
-                address = st.text_input("العنوان")
-            sub_btn = st.form_submit_button("💾 حفظ الشركة")
+                phone = st.text_input("Phone Number")
+                tax_num = st.text_input("Tax ID (VN)")
+                tax_office = st.text_input("Tax Office (VD)")
+                address = st.text_input("Full Address")
+            sub_btn = st.form_submit_button("💾 Save Company Record")
             if sub_btn and comp_name.strip():
-                new_c = {"الكود المحاسبي": acc_code, "اسم الشركة": comp_name, "النوع": comp_type, "البريد الإلكتروني": email, "الهاتف": phone, "الرقم الضريبي": tax_num, "المكتب الضريبي": tax_office, "العنوان": address, "تاريخ التسجيل": datetime.datetime.now().strftime("%Y-%m-%d %H:%M")}
+                new_c = {"Account Code": acc_code, "Company Name": comp_name, "Category": comp_type, "Email": email, "Phone": phone, "Tax ID": tax_num, "Tax Office": tax_office, "Address": address, "Created Date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M")}
                 st.session_state.companies.append(new_c)
                 save_companies(st.session_state.companies)
-                st.success(f"✅ تم تقييد الشركة بنجاح كود: {acc_code}")
+                st.success(f"✅ Company successfully saved with Account Code: {acc_code}")
                 st.rerun()
 
     with tab2:
@@ -280,28 +285,32 @@ elif selected_tool == "🏢 الشركات المقيّدة (Company Directory)"
             st.dataframe(df, use_container_width=True)
 
 # MODULE 4: INVOICE ENGINE
-elif selected_tool == "🧾 إصدار الفواتير (Invoice Engine)":
-    st.markdown("<div class='awam-header'><div class='awam-title'>🧾 وحدة إصدار الفواتير المعتمدة (Awam Financial Invoice Engine)</div><div class='awam-subtitle'>إصدار وتوليد الفواتير المالية الرسمية لشركة أوام لوجستيك بصيغة PDF.</div></div>", unsafe_allow_html=True)
+elif selected_tool == "🧾 Awam Invoice Engine":
+    st.markdown("<div class='awam-header'><div class='awam-title'>🧾 Awam Financial Invoice Engine</div><div class='awam-subtitle'>Generate professional freight billing PDFs aligned with Awam Logistics corporate standards.</div></div>", unsafe_allow_html=True)
 
     col_meta1, col_meta2 = st.columns(2)
     with col_meta1:
-        inv_num = st.text_input("رقم الفاتورة (Invoice Number)", value="INV-2401")
-        companies_list = [c["اسم الشركة"] for c in st.session_state.companies]
-        selected_comp = st.selectbox("اختر شركة مقيدة في السجل (أو أدخل يدوياً):", ["-- إدخال يدوي --"] + companies_list)
+        inv_num = st.text_input("Invoice Number", value="INV-2401")
+        companies_list = [c.get("Company Name", c.get("اسم الشركة", "")) for c in st.session_state.companies]
+        selected_comp = st.selectbox("Select Company from Directory (or enter manually):", ["-- Manual Entry --"] + companies_list)
         
         default_cust_text = "Awam Global Cannealan tinerey\nBURSA / TURKIYE\nVN: 1234567890"
-        if selected_comp != "-- إدخال يدوي --":
-            comp_obj = next((c for c in st.session_state.companies if c["اسم الشركة"] == selected_comp), None)
+        if selected_comp != "-- Manual Entry --":
+            comp_obj = next((c for c in st.session_state.companies if c.get("Company Name", c.get("اسم الشركة", "")) == selected_comp), None)
             if comp_obj:
-                default_cust_text = f"{comp_obj['اسم الشركة']}\n{comp_obj['العنوان']}\nVN: {comp_obj['الرقم الضريبي']}  VD: {comp_obj['المكتب الضريبي']}"
+                c_name = comp_obj.get("Company Name", comp_obj.get("اسم الشركة", ""))
+                c_addr = comp_obj.get("Address", comp_obj.get("العنوان", ""))
+                c_tax = comp_obj.get("Tax ID", comp_obj.get("الرقم الضريبي", ""))
+                c_off = comp_obj.get("Tax Office", comp_obj.get("المكتب الضريبي", ""))
+                default_cust_text = f"{c_name}\n{c_addr}\nVN: {c_tax}  VD: {c_off}"
 
-        cust_info = st.text_area("بيانات العميل (Customer Details)", value=default_cust_text, height=100)
+        cust_info = st.text_area("Customer Details", value=default_cust_text, height=100)
 
     with col_meta2:
-        inv_date = st.date_input("تاريخ الفاتورة (Date)", value=datetime.date.today()).strftime("%d.%m.%Y")
-        tax_val = st.number_input("قيمة الضريبة المضافة إن وجدت ($)", value=0.0)
+        inv_date = st.date_input("Invoice Date", value=datetime.date.today()).strftime("%d.%m.%Y")
+        tax_val = st.number_input("VAT / Tax Amount ($)", value=0.0)
 
-    st.subheader("📦 بنود الفاتورة (Invoice Line Items)")
+    st.subheader("📦 Invoice Line Items")
     init_df = pd.DataFrame([
         {"shipper": "Awam Global Cannealan tinerey", "description": "Sample Shipping Packet, BURSA / Turkiye", "units": 100.0, "unit_price": 30.0},
         {"shipper": "", "description": "", "units": 0.0, "unit_price": 0.0}
@@ -309,7 +318,7 @@ elif selected_tool == "🧾 إصدار الفواتير (Invoice Engine)":
 
     edited_invoice_df = st.data_editor(init_df, num_rows="dynamic", use_container_width=True)
 
-    if st.button("🚀 إصدار الفاتورة وتوليد PDF", type="primary"):
+    if st.button("🚀 Generate PDF Invoice", type="primary"):
         pdf_out = build_pdf_invoice(
             invoice_num=inv_num,
             invoice_date=inv_date,
@@ -319,10 +328,10 @@ elif selected_tool == "🧾 إصدار الفواتير (Invoice Engine)":
             logo_path="AG-LOGO.png"
         )
         st.download_button(
-            label="📥 تحميل الفاتورة الرسمية PDF (Awam Invoice)",
+            label="📥 Download Official PDF Invoice",
             data=pdf_out,
             file_name=f"Invoice_{inv_num}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
-        st.success("✅ تم إصدار الفاتورة بنجاح!")
+        st.success("✅ PDF Invoice generated successfully!")
