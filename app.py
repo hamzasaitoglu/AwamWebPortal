@@ -9,12 +9,23 @@ import openpyxl
 import pypdf
 import openai
 
+
+
+
 # Safe Key Assembly for Awam Logistics System
 k1 = "sk-proj-buja6UpYkyVQEWarEe3R7VJ9m4oJkPQI8VQqV_mjqZET4BTz-iqVHVG68Xi2k1gT"
 k2 = "DUgMeAC0PTT3BlbkFJUr0mzn9BGwOBTpevsUNY7bCqt3X2uxYW-b0j5Zb38rXfV_iewleem8Ok26ymSuAIloX0JCP8cA"
 OPENAI_API_KEY = k1 + k2
 
 st.set_page_config(page_title="Awam Logistics - Operations Portal", page_icon="🚢", layout="wide")
+
+# Speed Optimization: Cache OpenAI Client Connection for Awam Portal
+@st.cache_resource
+def get_openai_client():
+    return openai.OpenAI(api_key=OPENAI_API_KEY)
+
+client = get_openai_client()
+
 
 # Authorized Device Signatures for Awam Logistics
 MASTER_HARDWARE_UUID = "42BE9A82-E4F0-506E-B41F-FEF4F0BE2FA7"
@@ -248,7 +259,9 @@ with st.sidebar:
         "🧾 Awam Invoice Engine"
     ])
 
+# ==============================================================================
 # MODULE 1: QUICK RFQ STANDARDIZATION TOOL
+# ==============================================================================
 if selected_tool == "⚡ Quick RFQ Standardization Tool":
     st.markdown("<div class='awam-header'><div class='awam-title'>⚡ Quick RFQ Standardization Tool (Awam Quick RFQ)</div><div class='awam-subtitle'>Convert raw client inquiries into standardized 4-line operational freight requests.</div></div>", unsafe_allow_html=True)
     
@@ -271,7 +284,6 @@ if selected_tool == "⚡ Quick RFQ Standardization Tool":
         if process_btn and raw_message.strip():
             with st.spinner("Processing RFQ for Awam Operations..."):
                 try:
-                    client = openai.OpenAI(api_key=OPENAI_API_KEY)
                     prompt = f"""
                     You are the master operational RFQ parser for Awam Logistics (Freight Forwarding Expert).
                     Parse the raw client message into STRICTLY 4 lines (UPPERCASE):
@@ -318,7 +330,6 @@ if selected_tool == "⚡ Quick RFQ Standardization Tool":
         if "rfq_result" in st.session_state:
             st.code(st.session_state["rfq_result"], language="text")
             st.caption("📋 Click the copy icon on the top right of the box above to copy output instantly.")
-
 # MODULE 2: B/L CONVERTER
 elif selected_tool == "📜 B/L Instruction Converter":
     st.markdown("<div class='awam-header'><div class='awam-title'>📜 Bill of Lading (B/L) Instruction Converter</div><div class='awam-subtitle'>Extract Shipping Instructions from PDF/Excel/Word files directly into standardized dispatch tables.</div></div>", unsafe_allow_html=True)
