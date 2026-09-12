@@ -1,29 +1,25 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import pandas as pd
 import io
 import json
 import datetime
 import os
-import docx
-import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-import pypdf
 import openai
 
-# ReportLab Integration
+# ReportLab Integration for Awam Logistics
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
-# Safe Key Assembly for Awam Logistics System
+# Safe Key Assembly
 k1 = "sk-proj-buja6UpYkyVQEWarEe3R7VJ9m4oJkPQI8VQqV_mjqZET4BTz-iqVHVG68Xi2k1gT"
 k2 = "DUgMeAC0PTT3BlbkFJUr0mzn9BGwOBTpevsUNY7bCqt3X2uxYW-b0j5Zb38rXfV_iewleem8Ok26ymSuAIloX0JCP8cA"
 OPENAI_API_KEY = k1 + k2
 
 st.set_page_config(page_title="Awam Logistics - Operasyonel Portal", page_icon="🚢", layout="wide")
 
+# High-Contrast Interface Design
 st.markdown("""
 <style>
     .stApp { background-color: #0F172A !important; font-family: 'Inter', sans-serif !important; }
@@ -77,7 +73,7 @@ def sanitize_text(val):
         val_str = val_str.replace(search, replace)
     return val_str
 
-# ReportLab PDF Engine
+# PDF Invoice Engine (Perfect Design Matching Template)
 def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_amount=0.0, logo_path="AG-LOGO.png"):
     pdf_buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -91,14 +87,14 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
     story = []
     styles = getSampleStyleSheet()
 
-    header_title_style = ParagraphStyle(
-        'HT', parent=styles['Normal'],
-        fontName='Helvetica-Bold', fontSize=11, leading=13,
-        alignment=1, textColor=colors.HexColor("#0B1B3D")
+    header_company_title = ParagraphStyle(
+        'HCT', parent=styles['Normal'],
+        fontName='Helvetica-Bold', fontSize=10.5, leading=13,
+        alignment=1, textColor=colors.HexColor("#0A192F")
     )
     
-    header_sub_style = ParagraphStyle(
-        'HS', parent=styles['Normal'],
+    header_company_sub = ParagraphStyle(
+        'HCS', parent=styles['Normal'],
         fontName='Helvetica', fontSize=8, leading=11,
         alignment=1, textColor=colors.HexColor("#1A2530")
     )
@@ -108,37 +104,49 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
     cell_right = ParagraphStyle('CR', parent=cell_style, alignment=2)
     th_style = ParagraphStyle('TH', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8.5, leading=10, alignment=1, textColor=colors.white)
 
+    # 1. Top Logo
     if os.path.exists(logo_path):
-        logo = RLImage(logo_path, width=110, height=60)
+        logo = RLImage(logo_path, width=105, height=58)
         logo.hAlign = 'CENTER'
         story.append(logo)
-        story.append(Spacer(1, 8))
+        story.append(Spacer(1, 6))
 
+    # 2. Company Details Text
     comp_title = sanitize_text("AWAM GLOBAL LOJISTIK TICARET LIMITED SIRKETI")
-    comp_address = sanitize_text("ADDRESS: Mahmudiye Mahallesi Ertugrulgazi Caddesi No:55 ic kapi: 3 Inegol / BURSA / TURKIYE")
+    comp_address = sanitize_text("ADDRESS: Mahmudiye Mahallesi Ertugrulgazi Caddesi No:55 ic kapi:\n3 Inegol / BURSA / TURKIYE")
     
-    story.append(Paragraph(f"<b>{comp_title}</b>", header_title_style))
+    story.append(Paragraph(f"<b>{comp_title}</b>", header_company_title))
     story.append(Spacer(1, 3))
     
     header_info = f"""
-    {comp_address}<br/>
+    {comp_address.replace('\n', '<br/>')}<br/>
     <b>VN:</b> 0911212625 &nbsp;&nbsp; <b>VD:</b> INEGOL<br/>
-    <b>EMAIL:</b> tr.finans@awamlogistics.com &nbsp;&nbsp; <b>TEL:</b> +90 224 502 8395
+    <b>EMAIL:</b> tr.finans@awamlogistics.com<br/>
+    <b>TEL:</b> +90 224 502 8395
     """
-    story.append(Paragraph(header_info, header_sub_style))
-    story.append(Spacer(1, 14))
+    story.append(Paragraph(header_info, header_company_sub))
+    story.append(Spacer(1, 12))
 
+    # Line Separator under Company Header
+    story.append(Table([['']], colWidths=[540], rowHeights=[1], style=[
+        ('LINEABOVE', (0, 0), (-1, -1), 0.75, colors.HexColor("#0A192F")),
+        ('TOPPADDING', (0,0), (-1,-1), 0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+    ]))
+    story.append(Spacer(1, 12))
+
+    # 3. Customer Box and Invoice Box
     cust_clean = sanitize_text(customer_info).replace('\n', '<br/>')
     
     cust_table_data = [
         [Paragraph("Customer Details", th_style)],
         [Paragraph(cust_clean, cell_style)]
     ]
-    cust_table = Table(cust_table_data, colWidths=[255], rowHeights=[18, 52])
+    cust_table = Table(cust_table_data, colWidths=[255], rowHeights=[18, 50])
     cust_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0B1B3D")),
+        ('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0A192F")),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0B1B3D")),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0A192F")),
         ('BACKGROUND', (0, 1), (0, 1), colors.white),
     ]))
 
@@ -148,12 +156,12 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
         [Paragraph("Date", th_style)],
         [Paragraph(sanitize_text(invoice_date), cell_center)]
     ]
-    inv_table = Table(inv_table_data, colWidths=[255], rowHeights=[18, 17, 18, 17])
+    inv_table = Table(inv_table_data, colWidths=[255], rowHeights=[18, 16, 18, 16])
     inv_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0B1B3D")),
-        ('BACKGROUND', (0, 2), (0, 2), colors.HexColor("#0B1B3D")),
+        ('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0A192F")),
+        ('BACKGROUND', (0, 2), (0, 2), colors.HexColor("#0A192F")),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0B1B3D")),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0A192F")),
         ('BACKGROUND', (0, 1), (0, 1), colors.white),
         ('BACKGROUND', (0, 3), (0, 3), colors.white),
     ]))
@@ -167,8 +175,9 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
         ('TOPPADDING', (0, 0), (-1, -1), 0),
     ]))
     story.append(meta_wrapper)
-    story.append(Spacer(1, 14))
+    story.append(Spacer(1, 12))
 
+    # 4. Main Line Items Table
     items_table_data = [[
         Paragraph("NO", th_style),
         Paragraph("SHIPPER", th_style),
@@ -209,6 +218,7 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
         row_heights.append(None)
         valid_row_index += 1
 
+    # Exact spacious row heights for empty slots
     while len(items_table_data) < 8:
         items_table_data.append([
             Paragraph("", cell_style),
@@ -218,10 +228,11 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
             Paragraph("", cell_style),
             Paragraph("", cell_style)
         ])
-        row_heights.append(24)
+        row_heights.append(25)
 
     grand_total = subtotal + tax_amount
 
+    # Financial Rows (Subtotal, Tax, Grand Total)
     items_table_data.append(['', '', '', '', Paragraph("<b>SUBTOTAL</b>", cell_right), Paragraph(f"<b>${subtotal:,.2f}</b>", cell_right)])
     row_heights.append(20)
     items_table_data.append(['', '', '', '', Paragraph("<b>TAX</b>", cell_right), Paragraph(f"<b>${tax_amount:,.2f}</b>", cell_right)])
@@ -231,26 +242,33 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
 
     items_table = Table(items_table_data, colWidths=[30, 115, 175, 45, 87, 88], rowHeights=row_heights)
     items_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#2B709E")),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#2A72A4")),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('GRID', (0, 0), (-1, -4), 0.5, colors.HexColor("#2B709E")),
+        ('GRID', (0, 0), (-1, -4), 0.5, colors.HexColor("#2A72A4")),
         ('SPAN', (0, -3), (3, -3)),
         ('SPAN', (0, -2), (3, -2)),
         ('SPAN', (0, -1), (3, -1)),
-        ('GRID', (4, -3), (5, -1), 0.5, colors.HexColor("#0B1B3D")),
-        ('BACKGROUND', (4, -1), (5, -1), colors.HexColor("#0B1B3D")),
+        ('GRID', (4, -3), (5, -1), 0.5, colors.HexColor("#0A192F")),
+        ('BACKGROUND', (4, -1), (5, -1), colors.HexColor("#0A192F")),
     ]))
     story.append(items_table)
 
+    # 5. Canvas Callback: Outer Border & Pinned Website Footer Text
     def draw_page_decorations(canvas, doc):
         canvas.saveState()
-        canvas.setStrokeColor(colors.HexColor("#0B1B3D"))
+        canvas.setStrokeColor(colors.HexColor("#0A192F"))
         canvas.setLineWidth(1)
+        # Outer Border Box
         canvas.rect(18, 18, 576, 756)
         
+        # Lower Line Rule
+        canvas.setLineWidth(0.5)
+        canvas.line(36, 45, 576, 45)
+
+        # Centered Website Footer
         canvas.setFont("Helvetica", 8.5)
         canvas.setFillColor(colors.HexColor("#1A2530"))
-        canvas.drawCentredString(306, 28, "www.awamlogistics.com")
+        canvas.drawCentredString(306, 30, "www.awamlogistics.com")
         canvas.restoreState()
 
     doc.build(story, onFirstPage=draw_page_decorations, onLaterPages=draw_page_decorations)
@@ -267,7 +285,7 @@ with st.sidebar:
         "🧾 إصدار الفواتير (Invoice Engine)"
     ])
 
-# MODULE 1: RFQ
+# MODULE 1: RFQ CONVERTER
 if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
     st.markdown("<div class='awam-header'><div class='awam-title'>⚡ Satış Hızlı Talep Standardizasyon Aracı (Awam Quick RFQ)</div><div class='awam-subtitle'>Müşteriden gelen ham mesajları 4 satırlık UN/LOCODE standart fiyatlandırma formatına dönüştürün.</div></div>", unsafe_allow_html=True)
     now = datetime.datetime.now()
@@ -368,4 +386,4 @@ elif selected_tool == "🧾 إصدار الفواتير (Invoice Engine)":
             mime="application/pdf",
             use_container_width=True
         )
-        st.success("✅ تم إصدار الفاتورة بنجاح!")
+        st.success("✅ تم إصدار الفاتورة بنجاح ومطابقة كامل الأبعاد التنسيقية!")
