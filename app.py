@@ -1,38 +1,103 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import io
 import json
 import datetime
 import os
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+import pypdf
 import openai
 
-# ReportLab Integration for Awam Logistics
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
+# ReportLab Integration
+try:
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
 
-# Safe Key Assembly
+# Safe Key Assembly for Awam Logistics System
 k1 = "sk-proj-buja6UpYkyVQEWarEe3R7VJ9m4oJkPQI8VQqV_mjqZET4BTz-iqVHVG68Xi2k1gT"
 k2 = "DUgMeAC0PTT3BlbkFJUr0mzn9BGwOBTpevsUNY7bCqt3X2uxYW-b0j5Zb38rXfV_iewleem8Ok26ymSuAIloX0JCP8cA"
 OPENAI_API_KEY = k1 + k2
 
-st.set_page_config(page_title="Awam Logistics - Operasyonel Portal", page_icon="🚢", layout="wide")
+st.set_page_config(page_title="Awam Logistics - Operations Portal", page_icon="🚢", layout="wide")
 
-# High-Contrast Interface Design
+# High-End Light Logistics Design System (Immune to Dark/Light mode overrides)
 st.markdown("""
 <style>
-    .stApp { background-color: #0F172A !important; font-family: 'Inter', sans-serif !important; }
-    [data-testid="stSidebar"] { background-color: #1E293B !important; border-right: 1px solid #334155 !important; }
-    .brand-box { background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%); border: 1px solid #3B82F6; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 20px; }
-    .brand-title { font-size: 20px; font-weight: 900; color: #FFFFFF !important; margin: 0; }
-    .brand-sub { font-size: 11px; color: #93C5FD !important; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
-    h1, h2, h3, h4, h5, h6, label, p, span, div { color: #FFFFFF !important; }
-    .awam-header { background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 25px; }
-    .awam-title { font-size: 24px; font-weight: 800; color: #FFFFFF !important; margin: 0; }
-    .awam-subtitle { font-size: 13px; color: #CBD5E1 !important; margin-top: 5px; }
-    .stTextInput input, .stTextArea textarea, .stSelectbox select { background-color: #0F172A !important; color: #38BDF8 !important; border: 1px solid #475569 !important; border-radius: 8px !important; }
-    .stButton>button { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important; color: #FFFFFF !important; font-weight: 700 !important; border-radius: 8px !important; }
+    /* Force Light Background across all elements */
+    .stApp { background-color: #F8FAFC !important; color: #0F172A !important; font-family: 'Inter', -apple-system, sans-serif !important; }
+    [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E2E8F0 !important; }
+    
+    /* Corporate Brand Box */
+    .brand-box {
+        background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%);
+        border-radius: 10px;
+        padding: 16px;
+        text-align: center;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .brand-title { font-size: 18px; font-weight: 800; color: #FFFFFF !important; margin: 0; letter-spacing: 0.5px; }
+    .brand-sub { font-size: 10px; color: #93C5FD !important; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
+
+    /* Modern Headers */
+    .awam-header { 
+        background-color: #FFFFFF !important; 
+        border: 1px solid #E2E8F0 !important; 
+        border-left: 5px solid #2563EB !important;
+        border-radius: 8px !important; 
+        padding: 20px !important; 
+        margin-bottom: 20px !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    }
+    .awam-title { font-size: 22px; font-weight: 800; color: #0F172A !important; margin: 0; }
+    .awam-subtitle { font-size: 13px; color: #475569 !important; margin-top: 4px; }
+
+    /* Force Label and Text Colors */
+    h1, h2, h3, h4, h5, h6, p, span, div { color: #0F172A !important; }
+    label[data-testid="stWidgetLabel"] { color: #1E293B !important; font-weight: 700 !important; font-size: 13px !important; }
+
+    /* Form Inputs styling override */
+    .stTextInput input, .stTextArea textarea, .stSelectbox select, .stNumberInput input { 
+        background-color: #FFFFFF !important; 
+        color: #0F172A !important; 
+        border: 1px solid #CBD5E1 !important; 
+        border-radius: 6px !important; 
+        font-weight: 500 !important;
+    }
+    .stTextInput input:focus, .stTextArea textarea:focus { 
+        border-color: #2563EB !important; 
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+    }
+
+    /* Primary Action Buttons */
+    .stButton>button { 
+        background: #2563EB !important; 
+        color: #FFFFFF !important; 
+        font-weight: 700 !important; 
+        border-radius: 6px !important; 
+        border: none !important;
+        padding: 10px 24px !important;
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2) !important;
+    }
+    .stButton>button:hover { background: #1D4ED8 !important; }
+
+    /* Navigation Radio Fixes */
+    .stRadio > label { display: none !important; }
+    .stRadio div[role="radiogroup"] > label {
+        background: #F1F5F9 !important; border: 1px solid #E2E8F0 !important; border-radius: 8px !important;
+        padding: 10px 14px !important; color: #334155 !important; font-weight: 600 !important; width: 100% !important; margin-bottom: 6px !important;
+    }
+    .stRadio div[role="radiogroup"] > label[data-checked="true"] {
+        background: #2563EB !important; color: #FFFFFF !important; border-color: #2563EB !important;
+    }
+    .stRadio div[role="radiogroup"] > label[data-checked="true"] * { color: #FFFFFF !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -73,166 +138,73 @@ def sanitize_text(val):
         val_str = val_str.replace(search, replace)
     return val_str
 
-# PDF Invoice Engine (Perfect Design Matching Template)
+# PDF Invoice Engine
 def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_amount=0.0, logo_path="AG-LOGO.png"):
     pdf_buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        pdf_buffer,
-        pagesize=letter,
-        rightMargin=36,
-        leftMargin=36,
-        topMargin=36,
-        bottomMargin=36
-    )
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
     story = []
     styles = getSampleStyleSheet()
 
-    header_company_title = ParagraphStyle(
-        'HCT', parent=styles['Normal'],
-        fontName='Helvetica-Bold', fontSize=10.5, leading=13,
-        alignment=1, textColor=colors.HexColor("#0A192F")
-    )
-    
-    header_company_sub = ParagraphStyle(
-        'HCS', parent=styles['Normal'],
-        fontName='Helvetica', fontSize=8, leading=11,
-        alignment=1, textColor=colors.HexColor("#1A2530")
-    )
-
+    header_company_title = ParagraphStyle('HCT', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=10.5, leading=13, alignment=1, textColor=colors.HexColor("#0A192F"))
+    header_company_sub = ParagraphStyle('HCS', parent=styles['Normal'], fontName='Helvetica', fontSize=8, leading=11, alignment=1, textColor=colors.HexColor("#1A2530"))
     cell_style = ParagraphStyle('CS', parent=styles['Normal'], fontName='Helvetica', fontSize=8.5, leading=10, alignment=0)
     cell_center = ParagraphStyle('CC', parent=cell_style, alignment=1)
     cell_right = ParagraphStyle('CR', parent=cell_style, alignment=2)
     th_style = ParagraphStyle('TH', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8.5, leading=10, alignment=1, textColor=colors.white)
 
-    # 1. Top Logo
     if os.path.exists(logo_path):
         logo = RLImage(logo_path, width=105, height=58)
         logo.hAlign = 'CENTER'
         story.append(logo)
         story.append(Spacer(1, 6))
 
-    # 2. Company Details Text
     comp_title = sanitize_text("AWAM GLOBAL LOJISTIK TICARET LIMITED SIRKETI")
     comp_address = sanitize_text("ADDRESS: Mahmudiye Mahallesi Ertugrulgazi Caddesi No:55 ic kapi:\n3 Inegol / BURSA / TURKIYE")
-    
     story.append(Paragraph(f"<b>{comp_title}</b>", header_company_title))
     story.append(Spacer(1, 3))
     
-    header_info = f"""
-    {comp_address.replace('\n', '<br/>')}<br/>
-    <b>VN:</b> 0911212625 &nbsp;&nbsp; <b>VD:</b> INEGOL<br/>
-    <b>EMAIL:</b> tr.finans@awamlogistics.com<br/>
-    <b>TEL:</b> +90 224 502 8395
-    """
+    header_info = f"{comp_address.replace('\n', '<br/>')}<br/><b>VN:</b> 0911212625 &nbsp;&nbsp; <b>VD:</b> INEGOL<br/><b>EMAIL:</b> tr.finans@awamlogistics.com<br/><b>TEL:</b> +90 224 502 8395"
     story.append(Paragraph(header_info, header_company_sub))
     story.append(Spacer(1, 12))
 
-    # Line Separator under Company Header
-    story.append(Table([['']], colWidths=[540], rowHeights=[1], style=[
-        ('LINEABOVE', (0, 0), (-1, -1), 0.75, colors.HexColor("#0A192F")),
-        ('TOPPADDING', (0,0), (-1,-1), 0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-    ]))
+    story.append(Table([['']], colWidths=[540], rowHeights=[1], style=[('LINEABOVE', (0, 0), (-1, -1), 0.75, colors.HexColor("#0A192F"))]))
     story.append(Spacer(1, 12))
 
-    # 3. Customer Box and Invoice Box
     cust_clean = sanitize_text(customer_info).replace('\n', '<br/>')
-    
-    cust_table_data = [
-        [Paragraph("Customer Details", th_style)],
-        [Paragraph(cust_clean, cell_style)]
-    ]
-    cust_table = Table(cust_table_data, colWidths=[255], rowHeights=[18, 50])
-    cust_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0A192F")),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0A192F")),
-        ('BACKGROUND', (0, 1), (0, 1), colors.white),
-    ]))
+    cust_table = Table([[Paragraph("Customer Details", th_style)], [Paragraph(cust_clean, cell_style)]], colWidths=[255], rowHeights=[18, 50])
+    cust_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0A192F")), ('VALIGN', (0, 0), (-1, -1), 'TOP'), ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0A192F")), ('BACKGROUND', (0, 1), (0, 1), colors.white)]))
 
-    inv_table_data = [
-        [Paragraph("Invoice Number", th_style)],
-        [Paragraph(sanitize_text(invoice_num), cell_center)],
-        [Paragraph("Date", th_style)],
-        [Paragraph(sanitize_text(invoice_date), cell_center)]
-    ]
-    inv_table = Table(inv_table_data, colWidths=[255], rowHeights=[18, 16, 18, 16])
-    inv_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0A192F")),
-        ('BACKGROUND', (0, 2), (0, 2), colors.HexColor("#0A192F")),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0A192F")),
-        ('BACKGROUND', (0, 1), (0, 1), colors.white),
-        ('BACKGROUND', (0, 3), (0, 3), colors.white),
-    ]))
+    inv_table = Table([[Paragraph("Invoice Number", th_style)], [Paragraph(sanitize_text(invoice_num), cell_center)], [Paragraph("Date", th_style)], [Paragraph(sanitize_text(invoice_date), cell_center)]], colWidths=[255], rowHeights=[18, 16, 18, 16])
+    inv_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0A192F")), ('BACKGROUND', (0, 2), (0, 2), colors.HexColor("#0A192F")), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'), ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0A192F")), ('BACKGROUND', (0, 1), (0, 1), colors.white), ('BACKGROUND', (0, 3), (0, 3), colors.white)]))
 
-    meta_wrapper = Table([[cust_table, '', inv_table]], colWidths=[255, 30, 255])
-    meta_wrapper.setStyle(TableStyle([
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('LEFTPADDING', (0, 0), (-1, -1), 0),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-        ('TOPPADDING', (0, 0), (-1, -1), 0),
-    ]))
-    story.append(meta_wrapper)
+    story.append(Table([[cust_table, '', inv_table]], colWidths=[255, 30, 255], style=[('VALIGN', (0, 0), (-1, -1), 'TOP')]))
     story.append(Spacer(1, 12))
 
-    # 4. Main Line Items Table
-    items_table_data = [[
-        Paragraph("NO", th_style),
-        Paragraph("SHIPPER", th_style),
-        Paragraph("DESCRIPTION", th_style),
-        Paragraph("UNITS", th_style),
-        Paragraph("UNIT PRICE", th_style),
-        Paragraph("TOTAL", th_style)
-    ]]
-
+    items_table_data = [[Paragraph("NO", th_style), Paragraph("SHIPPER", th_style), Paragraph("DESCRIPTION", th_style), Paragraph("UNITS", th_style), Paragraph("UNIT PRICE", th_style), Paragraph("TOTAL", th_style)]]
     row_heights = [20]
     subtotal = 0.0
-    valid_row_index = 1
+    valid_idx = 1
 
     for item in items_data:
         shipper_val = sanitize_text(item.get("shipper", ""))
         desc_val = sanitize_text(item.get("description", ""))
-        
-        if not shipper_val and not desc_val:
-            continue
-
+        if not shipper_val and not desc_val: continue
         try: units = float(item.get("units", 0))
         except: units = 0.0
-
         try: unit_price = float(item.get("unit_price", 0))
         except: unit_price = 0.0
-
         line_total = units * unit_price
         subtotal += line_total
 
-        items_table_data.append([
-            Paragraph(str(valid_row_index), cell_center),
-            Paragraph(shipper_val, cell_style),
-            Paragraph(desc_val, cell_style),
-            Paragraph(str(int(units) if units.is_integer() else units), cell_center),
-            Paragraph(f"${unit_price:,.2f}", cell_right),
-            Paragraph(f"${line_total:,.2f}", cell_right)
-        ])
+        items_table_data.append([Paragraph(str(valid_idx), cell_center), Paragraph(shipper_val, cell_style), Paragraph(desc_val, cell_style), Paragraph(str(int(units) if units.is_integer() else units), cell_center), Paragraph(f"${unit_price:,.2f}", cell_right), Paragraph(f"${line_total:,.2f}", cell_right)])
         row_heights.append(None)
-        valid_row_index += 1
+        valid_idx += 1
 
-    # Exact spacious row heights for empty slots
     while len(items_table_data) < 8:
-        items_table_data.append([
-            Paragraph("", cell_style),
-            Paragraph("", cell_style),
-            Paragraph("", cell_style),
-            Paragraph("", cell_style),
-            Paragraph("", cell_style),
-            Paragraph("", cell_style)
-        ])
+        items_table_data.append([Paragraph("", cell_style)] * 6)
         row_heights.append(25)
 
     grand_total = subtotal + tax_amount
-
-    # Financial Rows (Subtotal, Tax, Grand Total)
     items_table_data.append(['', '', '', '', Paragraph("<b>SUBTOTAL</b>", cell_right), Paragraph(f"<b>${subtotal:,.2f}</b>", cell_right)])
     row_heights.append(20)
     items_table_data.append(['', '', '', '', Paragraph("<b>TAX</b>", cell_right), Paragraph(f"<b>${tax_amount:,.2f}</b>", cell_right)])
@@ -241,31 +213,16 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
     row_heights.append(22)
 
     items_table = Table(items_table_data, colWidths=[30, 115, 175, 45, 87, 88], rowHeights=row_heights)
-    items_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#2A72A4")),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('GRID', (0, 0), (-1, -4), 0.5, colors.HexColor("#2A72A4")),
-        ('SPAN', (0, -3), (3, -3)),
-        ('SPAN', (0, -2), (3, -2)),
-        ('SPAN', (0, -1), (3, -1)),
-        ('GRID', (4, -3), (5, -1), 0.5, colors.HexColor("#0A192F")),
-        ('BACKGROUND', (4, -1), (5, -1), colors.HexColor("#0A192F")),
-    ]))
+    items_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#2A72A4")), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'), ('GRID', (0, 0), (-1, -4), 0.5, colors.HexColor("#2A72A4")), ('SPAN', (0, -3), (3, -3)), ('SPAN', (0, -2), (3, -2)), ('SPAN', (0, -1), (3, -1)), ('GRID', (4, -3), (5, -1), 0.5, colors.HexColor("#0A192F")), ('BACKGROUND', (4, -1), (5, -1), colors.HexColor("#0A192F"))]))
     story.append(items_table)
 
-    # 5. Canvas Callback: Outer Border & Pinned Website Footer Text
     def draw_page_decorations(canvas, doc):
         canvas.saveState()
         canvas.setStrokeColor(colors.HexColor("#0A192F"))
         canvas.setLineWidth(1)
-        # Outer Border Box
         canvas.rect(18, 18, 576, 756)
-        
-        # Lower Line Rule
         canvas.setLineWidth(0.5)
         canvas.line(36, 45, 576, 45)
-
-        # Centered Website Footer
         canvas.setFont("Helvetica", 8.5)
         canvas.setFillColor(colors.HexColor("#1A2530"))
         canvas.drawCentredString(306, 30, "www.awamlogistics.com")
@@ -285,14 +242,14 @@ with st.sidebar:
         "🧾 إصدار الفواتير (Invoice Engine)"
     ])
 
-# MODULE 1: RFQ CONVERTER
+# MODULE 1: RFQ
 if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
     st.markdown("<div class='awam-header'><div class='awam-title'>⚡ Satış Hızlı Talep Standardizasyon Aracı (Awam Quick RFQ)</div><div class='awam-subtitle'>Müşteriden gelen ham mesajları 4 satırlık UN/LOCODE standart fiyatlandırma formatına dönüştürün.</div></div>", unsafe_allow_html=True)
     now = datetime.datetime.now()
     default_ref = f"AGL{now.strftime('%y%m%d')}{now.strftime('%H%M')}"
     col_input, col_output = st.columns([1, 1], gap="large")
     with col_input:
-        raw_text = st.text_area("نص الطلب الخام:", height=220, placeholder="ادخل نص الطلب هنا...")
+        raw_text = st.text_area("نص الطلب الخام:", height=200, placeholder="ادخل نص الطلب هنا...")
         r_col1, r_col2 = st.columns([1.2, 1])
         with r_col1: custom_ref = st.text_input("كود المرجعية", value=default_ref)
         with r_col2: process_btn = st.button("⚡ تحويل فوري", use_container_width=True)
@@ -308,7 +265,7 @@ if selected_tool == "⚡ Hızlı RFQ Talep Dönüştürücü":
 
     with col_output:
         if "rfq_result" in st.session_state:
-            st.text_area("النتيجة القياسية:", value=st.session_state["rfq_result"], height=220)
+            st.text_area("النتيجة القياسية:", value=st.session_state["rfq_result"], height=200)
 
 # MODULE 3: COMPANY DIRECTORY
 elif selected_tool == "🏢 الشركات المقيّدة (Company Directory)":
@@ -386,4 +343,4 @@ elif selected_tool == "🧾 إصدار الفواتير (Invoice Engine)":
             mime="application/pdf",
             use_container_width=True
         )
-        st.success("✅ تم إصدار الفاتورة بنجاح ومطابقة كامل الأبعاد التنسيقية!")
+        st.success("✅ تم إصدار الفاتورة بنجاح!")
