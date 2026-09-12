@@ -6,19 +6,8 @@ import json
 import datetime
 import os
 import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 import pypdf
 import openai
-
-# ReportLab Integration
-try:
-    from reportlab.lib.pagesizes import letter
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib import colors
-    REPORTLAB_AVAILABLE = True
-except ImportError:
-    REPORTLAB_AVAILABLE = False
 
 # Safe Key Assembly for Awam Logistics System
 k1 = "sk-proj-buja6UpYkyVQEWarEe3R7VJ9m4oJkPQI8VQqV_mjqZET4BTz-iqVHVG68Xi2k1gT"
@@ -27,26 +16,18 @@ OPENAI_API_KEY = k1 + k2
 
 st.set_page_config(page_title="Awam Logistics - Suite", page_icon="🚢", layout="wide")
 
-# Strict Light Theme CSS Injection (Removes Dark Mode completely)
+# High-Performance Light Theme System
 st.markdown("""
 <style>
-    /* Force White & Light Gray Colors Everywhere */
     html, body, .stApp, [data-testid="stAppViewContainer"] {
         background-color: #F8FAFC !important;
         color: #0F172A !important;
         font-family: 'Inter', sans-serif !important;
     }
-    
     [data-testid="stSidebar"] {
         background-color: #FFFFFF !important;
         border-right: 1px solid #E2E8F0 !important;
     }
-    
-    [data-testid="stHeader"] {
-        background-color: #F8FAFC !important;
-    }
-
-    /* Corporate Brand Box */
     .brand-box {
         background: linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);
         border-radius: 8px;
@@ -56,8 +37,6 @@ st.markdown("""
     }
     .brand-title { font-size: 18px; font-weight: 800; color: #FFFFFF !important; margin: 0; }
     .brand-sub { font-size: 10px; color: #93C5FD !important; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
-
-    /* Module Header Cards */
     .awam-header { 
         background-color: #FFFFFF !important; 
         border: 1px solid #E2E8F0 !important; 
@@ -68,19 +47,14 @@ st.markdown("""
     }
     .awam-title { font-size: 20px; font-weight: 800; color: #0F172A !important; margin: 0; }
     .awam-subtitle { font-size: 12px; color: #475569 !important; margin-top: 4px; }
-
-    /* Force Light Text Labels and Inputs */
     h1, h2, h3, h4, h5, h6, p, span, div, label { color: #0F172A !important; }
     label[data-testid="stWidgetLabel"] { font-weight: 700 !important; font-size: 13px !important; color: #0F172A !important; }
-
     .stTextInput input, .stTextArea textarea, .stSelectbox select, .stNumberInput input { 
         background-color: #FFFFFF !important; 
         color: #0F172A !important; 
         border: 1px solid #CBD5E1 !important; 
         border-radius: 6px !important; 
     }
-
-    /* Primary Action Buttons */
     .stButton>button { 
         background: #1D4ED8 !important; 
         color: #FFFFFF !important; 
@@ -89,8 +63,6 @@ st.markdown("""
         border: none !important;
         padding: 8px 20px !important;
     }
-
-    /* Sidebar Navigation Radios */
     .stRadio > label { display: none !important; }
     .stRadio div[role="radiogroup"] > label {
         background: #F1F5F9 !important; border: 1px solid #E2E8F0 !important; border-radius: 6px !important;
@@ -103,9 +75,10 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Database Handling for Companies
-DB_FILE = "companies_db.json"
-def load_companies():
+# 1. Caching Engine for Fast Data Loading
+@st.cache_data(ttl=60)
+def load_companies_fast():
+    DB_FILE = "companies_db.json"
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
@@ -114,11 +87,13 @@ def load_companies():
     return []
 
 def save_companies(data):
+    DB_FILE = "companies_db.json"
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+    st.cache_data.clear()
 
 if "companies" not in st.session_state:
-    st.session_state.companies = load_companies()
+    st.session_state.companies = load_companies_fast()
 
 def generate_account_code():
     count = len(st.session_state.companies) + 1
@@ -140,8 +115,13 @@ def sanitize_text(val):
         val_str = val_str.replace(search, replace)
     return val_str
 
-# PDF Invoice Engine
+# PDF Invoice Generation Engine
 def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_amount=0.0, logo_path="AG-LOGO.png"):
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+
     pdf_buffer = io.BytesIO()
     doc = SimpleDocTemplate(pdf_buffer, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
     story = []
@@ -234,7 +214,7 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, tax_
     pdf_buffer.seek(0)
     return pdf_buffer
 
-# Sidebar Navigation
+# Navigation System
 with st.sidebar:
     st.markdown("<div class='brand-box'><div class='brand-title'>AWAM LOGISTICS</div><div class='brand-sub'>Freight Forwarding Suite</div></div>", unsafe_allow_html=True)
     selected_tool = st.radio("Navigation", [
