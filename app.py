@@ -25,77 +25,79 @@ k1 = "sk-proj-buja6UpYkyVQEWarEe3R7VJ9m4oJkPQI8VQqV_mjqZET4BTz-iqVHVG68Xi2k1gT"
 k2 = "DUgMeAC0PTT3BlbkFJUr0mzn9BGwOBTpevsUNY7bCqt3X2uxYW-b0j5Zb38rXfV_iewleem8Ok26ymSuAIloX0JCP8cA"
 OPENAI_API_KEY = k1 + k2
 
-st.set_page_config(page_title="Awam Logistics - Operations Portal", page_icon="🚢", layout="wide")
+st.set_page_config(page_title="Awam Logistics - Suite", page_icon="🚢", layout="wide")
 
-# High-End Light Logistics Design System (Immune to Dark/Light mode overrides)
+# Strict Light Theme CSS Injection (Removes Dark Mode completely)
 st.markdown("""
 <style>
-    /* Force Light Background across all elements */
-    .stApp { background-color: #F8FAFC !important; color: #0F172A !important; font-family: 'Inter', -apple-system, sans-serif !important; }
-    [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E2E8F0 !important; }
+    /* Force White & Light Gray Colors Everywhere */
+    html, body, .stApp, [data-testid="stAppViewContainer"] {
+        background-color: #F8FAFC !important;
+        color: #0F172A !important;
+        font-family: 'Inter', sans-serif !important;
+    }
     
+    [data-testid="stSidebar"] {
+        background-color: #FFFFFF !important;
+        border-right: 1px solid #E2E8F0 !important;
+    }
+    
+    [data-testid="stHeader"] {
+        background-color: #F8FAFC !important;
+    }
+
     /* Corporate Brand Box */
     .brand-box {
-        background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%);
-        border-radius: 10px;
+        background: linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);
+        border-radius: 8px;
         padding: 16px;
         text-align: center;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
     }
-    .brand-title { font-size: 18px; font-weight: 800; color: #FFFFFF !important; margin: 0; letter-spacing: 0.5px; }
+    .brand-title { font-size: 18px; font-weight: 800; color: #FFFFFF !important; margin: 0; }
     .brand-sub { font-size: 10px; color: #93C5FD !important; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
 
-    /* Modern Headers */
+    /* Module Header Cards */
     .awam-header { 
         background-color: #FFFFFF !important; 
         border: 1px solid #E2E8F0 !important; 
-        border-left: 5px solid #2563EB !important;
+        border-left: 5px solid #1D4ED8 !important;
         border-radius: 8px !important; 
-        padding: 20px !important; 
+        padding: 18px !important; 
         margin-bottom: 20px !important;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
     }
-    .awam-title { font-size: 22px; font-weight: 800; color: #0F172A !important; margin: 0; }
-    .awam-subtitle { font-size: 13px; color: #475569 !important; margin-top: 4px; }
+    .awam-title { font-size: 20px; font-weight: 800; color: #0F172A !important; margin: 0; }
+    .awam-subtitle { font-size: 12px; color: #475569 !important; margin-top: 4px; }
 
-    /* Force Label and Text Colors */
-    h1, h2, h3, h4, h5, h6, p, span, div { color: #0F172A !important; }
-    label[data-testid="stWidgetLabel"] { color: #1E293B !important; font-weight: 700 !important; font-size: 13px !important; }
+    /* Force Light Text Labels and Inputs */
+    h1, h2, h3, h4, h5, h6, p, span, div, label { color: #0F172A !important; }
+    label[data-testid="stWidgetLabel"] { font-weight: 700 !important; font-size: 13px !important; color: #0F172A !important; }
 
-    /* Form Inputs styling override */
     .stTextInput input, .stTextArea textarea, .stSelectbox select, .stNumberInput input { 
         background-color: #FFFFFF !important; 
         color: #0F172A !important; 
         border: 1px solid #CBD5E1 !important; 
         border-radius: 6px !important; 
-        font-weight: 500 !important;
-    }
-    .stTextInput input:focus, .stTextArea textarea:focus { 
-        border-color: #2563EB !important; 
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
     }
 
     /* Primary Action Buttons */
     .stButton>button { 
-        background: #2563EB !important; 
+        background: #1D4ED8 !important; 
         color: #FFFFFF !important; 
         font-weight: 700 !important; 
         border-radius: 6px !important; 
         border: none !important;
-        padding: 10px 24px !important;
-        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2) !important;
+        padding: 8px 20px !important;
     }
-    .stButton>button:hover { background: #1D4ED8 !important; }
 
-    /* Navigation Radio Fixes */
+    /* Sidebar Navigation Radios */
     .stRadio > label { display: none !important; }
     .stRadio div[role="radiogroup"] > label {
-        background: #F1F5F9 !important; border: 1px solid #E2E8F0 !important; border-radius: 8px !important;
-        padding: 10px 14px !important; color: #334155 !important; font-weight: 600 !important; width: 100% !important; margin-bottom: 6px !important;
+        background: #F1F5F9 !important; border: 1px solid #E2E8F0 !important; border-radius: 6px !important;
+        padding: 10px !important; color: #334155 !important; font-weight: 600 !important; width: 100% !important; margin-bottom: 6px !important;
     }
     .stRadio div[role="radiogroup"] > label[data-checked="true"] {
-        background: #2563EB !important; color: #FFFFFF !important; border-color: #2563EB !important;
+        background: #1D4ED8 !important; color: #FFFFFF !important; border-color: #1D4ED8 !important;
     }
     .stRadio div[role="radiogroup"] > label[data-checked="true"] * { color: #FFFFFF !important; }
 </style>
