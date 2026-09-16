@@ -8,16 +8,11 @@ import os
 import openpyxl
 import pypdf
 import openai
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-from openpyxl.utils import get_column_letter
 
 # Safe Key Assembly for Awam Logistics System
 k1 = "sk-proj-buja6UpYkyVQEWarEe3R7VJ9m4oJkPQI8VQqV_mjqZET4BTz-iqVHVG68Xi2k1gT"
 k2 = "DUgMeAC0PTT3BlbkFJUr0mzn9BGwOBTpevsUNY7bCqt3X2uxYW-b0j5Zb38rXfV_iewleem8Ok26ymSuAIloX0JCP8cA"
 OPENAI_API_KEY = k1 + k2
-
-st.set_page_config(page_title="Awam Logistics - Operations Portal", page_icon="🚢", layout="wide")
 
 # Speed Optimization: Cache OpenAI Client Connection for Awam Portal
 @st.cache_resource
@@ -25,6 +20,8 @@ def get_openai_client():
     return openai.OpenAI(api_key=OPENAI_API_KEY)
 
 client = get_openai_client()
+
+st.set_page_config(page_title="Awam Logistics - Operations Portal", page_icon="🚢", layout="wide")
 
 # Authorized Device Signatures for Awam Logistics
 MASTER_HARDWARE_UUID = "42BE9A82-E4F0-506E-B41F-FEF4F0BE2FA7"
@@ -149,8 +146,17 @@ def sanitize_text(val):
         val_str = val_str.replace(search, replace)
     return val_str
 
-# PDF Invoice Generation Engine (UPDATED: Horizontal Containers Layout)
-def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, container_numbers="", bank_details="", tax_amount=0.0, logo_path="AG-LOGO.png"):
+# PDF Invoice Generation Engine
+def build_pdf_invoice(
+    invoice_num, 
+    invoice_date, 
+    customer_info, 
+    items_data, 
+    container_numbers="", 
+    bank_details="", 
+    tax_amount=0.0, 
+    logo_path="AG-LOGO.png"
+):
     from reportlab.lib.pagesizes import letter
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -161,7 +167,7 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, cont
     story = []
     styles = getSampleStyleSheet()
 
-    header_company_title = ParagraphStyle('HCT', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=10.5, leading=13, alignment=1, textColor=colors.HexColor("#0A192F"))
+    header_company_title = ParagraphStyle('HCT', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=10.5, leading=13, alignment=1, textColor=colors.HexColor("#0B1B3D"))
     header_company_sub = ParagraphStyle('HCS', parent=styles['Normal'], fontName='Helvetica', fontSize=8, leading=11, alignment=1, textColor=colors.HexColor("#1A2530"))
     cell_style = ParagraphStyle('CS', parent=styles['Normal'], fontName='Helvetica', fontSize=8.5, leading=10, alignment=0)
     cell_center = ParagraphStyle('CC', parent=cell_style, alignment=1)
@@ -181,38 +187,20 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, cont
     
     header_info = f"{comp_address.replace('\n', '<br/>')}<br/><b>VN:</b> 0911212625 &nbsp;&nbsp; <b>VD:</b> INEGOL<br/><b>EMAIL:</b> tr.finans@awamlogistics.com<br/><b>TEL:</b> +90 224 502 8395"
     story.append(Paragraph(header_info, header_company_sub))
-    story.append(Spacer(1, 12))
+    story.append(Spacer(1, 10))
 
-    story.append(Table([['']], colWidths=[540], rowHeights=[1], style=[('LINEABOVE', (0, 0), (-1, -1), 0.75, colors.HexColor("#0A192F"))]))
-    story.append(Spacer(1, 12))
+    story.append(Table([['']], colWidths=[540], rowHeights=[1], style=[('LINEABOVE', (0, 0), (-1, -1), 0.75, colors.HexColor("#0B1B3D"))]))
+    story.append(Spacer(1, 10))
 
     cust_clean = sanitize_text(customer_info).replace('\n', '<br/>')
     cust_table = Table([[Paragraph("Customer Details", th_style)], [Paragraph(cust_clean, cell_style)]], colWidths=[255], rowHeights=[18, 50])
-    cust_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0A192F")), ('VALIGN', (0, 0), (-1, -1), 'TOP'), ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0A192F")), ('BACKGROUND', (0, 1), (0, 1), colors.white)]))
+    cust_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0B1B3D")), ('VALIGN', (0, 0), (-1, -1), 'TOP'), ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0B1B3D")), ('BACKGROUND', (0, 1), (0, 1), colors.white)]))
 
     inv_table = Table([[Paragraph("Invoice Number", th_style)], [Paragraph(sanitize_text(invoice_num), cell_center)], [Paragraph("Date", th_style)], [Paragraph(sanitize_text(invoice_date), cell_center)]], colWidths=[255], rowHeights=[18, 16, 18, 16])
-    inv_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0A192F")), ('BACKGROUND', (0, 2), (0, 2), colors.HexColor("#0A192F")), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'), ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0A192F")), ('BACKGROUND', (0, 1), (0, 1), colors.white), ('BACKGROUND', (0, 3), (0, 3), colors.white)]))
+    inv_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0B1B3D")), ('BACKGROUND', (0, 2), (0, 2), colors.HexColor("#0B1B3D")), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'), ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0B1B3D")), ('BACKGROUND', (0, 1), (0, 1), colors.white), ('BACKGROUND', (0, 3), (0, 3), colors.white)]))
 
     story.append(Table([[cust_table, '', inv_table]], colWidths=[255, 30, 255], style=[('VALIGN', (0, 0), (-1, -1), 'TOP')]))
-    story.append(Spacer(1, 12))
-
-    # Dynamic Horizontal Formatting for Containers (Split multi-lines into comma-separated inline text)
-    if container_numbers.strip():
-        raw_lines = [line.strip() for line in container_numbers.strip().splitlines() if line.strip()]
-        horizontal_containers = ", ".join(raw_lines)
-        cnt_text = sanitize_text(horizontal_containers)
-        
-        cnt_table = Table([
-            [Paragraph("<b>Container / Booking References:</b>", cell_style)],
-            [Paragraph(cnt_text, cell_style)]
-        ], colWidths=[540])
-        cnt_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#F1F5F9")),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP')
-        ]))
-        story.append(cnt_table)
-        story.append(Spacer(1, 12))
+    story.append(Spacer(1, 10))
 
     items_table_data = [[Paragraph("NO", th_style), Paragraph("SHIPPER", th_style), Paragraph("DESCRIPTION", th_style), Paragraph("UNITS", th_style), Paragraph("UNIT PRICE", th_style), Paragraph("TOTAL", th_style)]]
     row_heights = [20]
@@ -234,32 +222,58 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, cont
         row_heights.append(None)
         valid_idx += 1
 
-    while len(items_table_data) < 8:
+    while len(items_table_data) < 7:
         items_table_data.append([Paragraph("", cell_style)] * 6)
-        row_heights.append(25)
+        row_heights.append(22)
 
     grand_total = subtotal + tax_amount
     items_table_data.append(['', '', '', '', Paragraph("<b>SUBTOTAL</b>", cell_right), Paragraph(f"<b>${subtotal:,.2f}</b>", cell_right)])
-    row_heights.append(20)
+    row_heights.append(18)
     items_table_data.append(['', '', '', '', Paragraph("<b>TAX</b>", cell_right), Paragraph(f"<b>${tax_amount:,.2f}</b>", cell_right)])
-    row_heights.append(20)
+    row_heights.append(18)
     items_table_data.append(['', '', '', '', Paragraph("<font color='white'><b>GRAND TOTAL:</b></font>", cell_right), Paragraph(f"<font color='white'><b>${grand_total:,.2f}</b></font>", cell_right)])
-    row_heights.append(22)
+    row_heights.append(20)
 
     items_table = Table(items_table_data, colWidths=[30, 115, 175, 45, 87, 88], rowHeights=row_heights)
-    items_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#2A72A4")), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'), ('GRID', (0, 0), (-1, -4), 0.5, colors.HexColor("#2A72A4")), ('SPAN', (0, -3), (3, -3)), ('SPAN', (0, -2), (3, -2)), ('SPAN', (0, -1), (3, -1)), ('GRID', (4, -3), (5, -1), 0.5, colors.HexColor("#0A192F")), ('BACKGROUND', (4, -1), (5, -1), colors.HexColor("#0A192F"))]))
+    items_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#2B709E")), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'), ('GRID', (0, 0), (-1, -4), 0.5, colors.HexColor("#2B709E")), ('SPAN', (0, -3), (3, -3)), ('SPAN', (0, -2), (3, -2)), ('SPAN', (0, -1), (3, -1)), ('GRID', (4, -3), (5, -1), 0.5, colors.HexColor("#0B1B3D")), ('BACKGROUND', (4, -1), (5, -1), colors.HexColor("#0B1B3D"))]))
     story.append(items_table)
-    story.append(Spacer(1, 12))
+    story.append(Spacer(1, 10))
 
-    if bank_details.strip():
-        bank_clean = sanitize_text(bank_details).replace('\n', '<br/>')
-        bank_table = Table([[Paragraph("Bank Details for Payment", th_style)], [Paragraph(bank_clean, cell_style)]], colWidths=[540])
-        bank_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0A192F")), ('VALIGN', (0, 0), (-1, -1), 'TOP'), ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0A192F")), ('BACKGROUND', (0, 1), (0, 1), colors.HexColor("#F8FAFC"))]))
-        story.append(bank_table)
+    # Container Numbers & Bank Details Box Construction
+    cnt_title = Paragraph("<b>Container / Booking Numbers</b>", th_style)
+    cnt_clean = sanitize_text(container_numbers).replace('\n', '<br/>') if container_numbers.strip() else "N/A"
+    cnt_body = Paragraph(cnt_clean, cell_style)
+    
+    cnt_box = Table([[cnt_title], [cnt_body]], colWidths=[255])
+    cnt_box.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0B1B3D")),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0B1B3D")),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('BACKGROUND', (0, 1), (0, 1), colors.white),
+    ]))
+
+    bank_title = Paragraph("<b>Bank Payment Details</b>", th_style)
+    default_bank_fallback = "BENEFICIARY NAME: AWAM GLOBAL LOJISTIK TICARET LIMITED SIRKETI\nIBAN NO: TR63 0020 3000 0981 9089 0000 02 ( USD )\nSWIFT CODE: BTFHTRISXXX\nBANK: Albaraka Türk"
+    bank_clean = sanitize_text(bank_details if bank_details.strip() else default_bank_fallback).replace('\n', '<br/>')
+    bank_body = Paragraph(bank_clean, cell_style)
+    
+    bank_box = Table([[bank_title], [bank_body]], colWidths=[255])
+    bank_box.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, 0), colors.HexColor("#0B1B3D")),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#0B1B3D")),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('BACKGROUND', (0, 1), (0, 1), colors.white),
+    ]))
+
+    bottom_table = Table([[cnt_box, '', bank_box]], colWidths=[255, 30, 255])
+    bottom_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+    ]))
+    story.append(bottom_table)
 
     def draw_page_decorations(canvas, doc):
         canvas.saveState()
-        canvas.setStrokeColor(colors.HexColor("#0A192F"))
+        canvas.setStrokeColor(colors.HexColor("#0B1B3D"))
         canvas.setLineWidth(1)
         canvas.rect(18, 18, 576, 756)
         canvas.setLineWidth(0.5)
@@ -273,170 +287,6 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, cont
     pdf_buffer.seek(0)
     return pdf_buffer
 
-# B/L Instruction Converter Core Engine Helpers
-def extract_text_from_file(uploaded_file):
-    """Extract text content from uploaded instruction file."""
-    text = ""
-    try:
-        file_type = uploaded_file.name.split('.')[-1].lower()
-        if file_type == 'pdf':
-            reader = pypdf.PdfReader(uploaded_file)
-            for page in reader.pages:
-                text += (page.extract_text() or "") + "\n"
-        elif file_type in ['txt', 'csv']:
-            text = uploaded_file.read().decode("utf-8", errors="ignore")
-        else:
-            text = "File uploaded successfully. Please review or fill fields manually."
-    except Exception as e:
-        text = f"Could not extract text automatically: {str(e)}"
-    return text
-
-def generate_bl_excel(booking_data, shipper_data, cnee_data, notify_data, containers_df):
-    """Generate Excel file formatted according to Awam Logistics official template."""
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Shipping Instruction"
-    ws.views.sheetView[0].showGridLines = True
-
-    # Styling and Colors
-    navy_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
-    section_fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
-    white_bold_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
-    section_font = Font(name="Calibri", size=11, bold=True, color="1F4E78")
-    bold_font = Font(name="Calibri", size=10, bold=True)
-    italic_font = Font(name="Calibri", size=10, italic=True)
-    regular_font = Font(name="Calibri", size=10)
-    
-    thin_border = Border(
-        left=Side(style='thin', color='D9D9D9'),
-        right=Side(style='thin', color='D9D9D9'),
-        top=Side(style='thin', color='D9D9D9'),
-        bottom=Side(style='thin', color='D9D9D9')
-    )
-
-    # 1. Title Banner (Row 2)
-    ws.merge_cells("A2:G2")
-    cell_a2 = ws["A2"]
-    cell_a2.value = "Official Shipping Instruction Document | www.awamlogistics.com"
-    cell_a2.fill = navy_fill
-    cell_a2.font = white_bold_font
-    cell_a2.alignment = Alignment(horizontal="center", vertical="center")
-    ws.row_dimensions[2].height = 24
-
-    # 2. General Booking Info (Rows 4-9)
-    b_fields = [
-        ("Booking No:", booking_data.get("booking_no", "")),
-        ("Shipping Line:", booking_data.get("line", "")),
-        ("Vessel & Voyage:", booking_data.get("vessel_voyage", "")),
-        ("POL (Loading Port):", booking_data.get("pol", "")),
-        ("POD (Discharge Port):", booking_data.get("pod", "")),
-        ("Freight Terms:", booking_data.get("freight_terms", "FREIGHT PREPAID"))
-    ]
-
-    for idx, (label, val) in enumerate(b_fields, start=4):
-        ws.cell(row=idx, column=1, value=label).font = bold_font
-        ws.cell(row=idx, column=3, value=val).font = regular_font
-
-    # 3. Party Section Writer
-    def write_party_section(start_row, section_title, party_data):
-        ws.merge_cells(start_row=start_row, start_column=1, end_row=start_row, end_column=7)
-        sec_cell = ws.cell(row=start_row, column=1, value=section_title)
-        sec_cell.fill = section_fill
-        sec_cell.font = section_font
-        
-        fields = [
-            ("Company Name", party_data.get("name", "")),
-            ("Address", party_data.get("address", "")),
-            ("Tax Number", party_data.get("vat_no", "")),
-            ("Tel", party_data.get("tel", "")),
-            ("Email", party_data.get("email", ""))
-        ]
-        
-        for offset, (lbl, val) in enumerate(fields, start=1):
-            curr_row = start_row + offset
-            ws.cell(row=curr_row, column=1, value=lbl).font = italic_font
-            ws.cell(row=curr_row, column=3, value=val).font = regular_font
-
-    write_party_section(11, "1. SHIPPER DETAILS", shipper_data)
-    write_party_section(17, "2. CONSIGNEE DETAILS", cnee_data)
-    write_party_section(23, "3. NOTIFY PARTY DETAILS", notify_data)
-
-    # 4. Containers Table Header (Row 29)
-    headers = ["Container No", "Seal No", "Type / HS Code", "Packages", "Description of Goods", "Gross Weight (KG)", "Volume (CBM)"]
-    ws.row_dimensions[29].height = 22
-    for col_num, h_text in enumerate(headers, 1):
-        c = ws.cell(row=29, column=col_num, value=h_text)
-        c.fill = navy_fill
-        c.font = white_bold_font
-        c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-
-    # 5. Containers Data Rows (Row 30+)
-    start_c_row = 30
-    total_pkgs = 0
-    total_gw = 0.0
-    total_cbm = 0.0
-
-    for i, row in containers_df.iterrows():
-        r = start_c_row + i
-        ws.cell(row=r, column=1, value=row.get("Container No", "")).font = regular_font
-        ws.cell(row=r, column=2, value=row.get("Seal No", "")).font = regular_font
-        ws.cell(row=r, column=3, value=row.get("HS Code / Type", "")).font = regular_font
-        
-        # Packages
-        pkg_val = row.get("Packages", "")
-        ws.cell(row=r, column=4, value=pkg_val).font = regular_font
-        try:
-            total_pkgs += int(pkg_val)
-        except (ValueError, TypeError):
-            pass
-
-        ws.cell(row=r, column=5, value=row.get("Description", "")).font = regular_font
-        
-        # Gross Weight
-        gw_val = float(row.get("Gross Weight (KG)", 0) or 0)
-        gw_cell = ws.cell(row=r, column=6, value=gw_val)
-        gw_cell.number_format = '#,##0.00'
-        gw_cell.font = regular_font
-        total_gw += gw_val
-        
-        # Volume (CBM)
-        cbm_val = float(row.get("Volume (CBM)", 0) or 0)
-        cbm_cell = ws.cell(row=r, column=7, value=cbm_val)
-        cbm_cell.number_format = '#,##0.00'
-        cbm_cell.font = regular_font
-        total_cbm += cbm_val
-
-        for col_num in range(1, 8):
-            ws.cell(row=r, column=col_num).border = thin_border
-
-    # 6. TOTAL Row Addition
-    tot_row = start_c_row + len(containers_df)
-    ws.cell(row=tot_row, column=1, value="TOTAL").font = bold_font
-    ws.cell(row=tot_row, column=4, value=total_pkgs if total_pkgs > 0 else "").font = bold_font
-    
-    tot_gw_cell = ws.cell(row=tot_row, column=6, value=total_gw)
-    tot_gw_cell.number_format = '#,##0.00'
-    tot_gw_cell.font = bold_font
-
-    tot_cbm_cell = ws.cell(row=tot_row, column=7, value=total_cbm)
-    tot_cbm_cell.number_format = '#,##0.00'
-    tot_cbm_cell.font = bold_font
-
-    for col_num in range(1, 8):
-        c = ws.cell(row=tot_row, column=col_num)
-        c.fill = section_fill
-        c.border = thin_border
-
-    # Adjust Column Widths (Enlarged Description Column to 60)
-    col_widths = {1: 20, 2: 16, 3: 18, 4: 15, 5: 60, 6: 20, 7: 16}
-    for col_idx, width in col_widths.items():
-        ws.column_dimensions[get_column_letter(col_idx)].width = width
-
-    output = io.BytesIO()
-    wb.save(output)
-    output.seek(0)
-    return output
-
 # Navigation System
 with st.sidebar:
     st.markdown("<div class='brand-box'><div class='brand-title'>AWAM LOGISTICS</div><div class='brand-sub'>Freight Forwarding Suite</div></div>", unsafe_allow_html=True)
@@ -447,9 +297,7 @@ with st.sidebar:
         "🧾 Awam Invoice Engine"
     ])
 
-# ==============================================================================
 # MODULE 1: QUICK RFQ STANDARDIZATION TOOL
-# ==============================================================================
 if selected_tool == "⚡ Quick RFQ Standardization Tool":
     st.markdown("<div class='awam-header'><div class='awam-title'>⚡ Quick RFQ Standardization Tool (Awam Quick RFQ)</div><div class='awam-subtitle'>Convert raw client inquiries into standardized 4-line operational freight requests.</div></div>", unsafe_allow_html=True)
     
@@ -519,133 +367,12 @@ if selected_tool == "⚡ Quick RFQ Standardization Tool":
             st.code(st.session_state["rfq_result"], language="text")
             st.caption("📋 Click the copy icon on the top right of the box above to copy output instantly.")
 
-# ==============================================================================
-# MODULE 2: B/L INSTRUCTION CONVERTER
-# ==============================================================================
+# MODULE 2: B/L CONVERTER
 elif selected_tool == "📜 B/L Instruction Converter":
     st.markdown("<div class='awam-header'><div class='awam-title'>📜 Bill of Lading (B/L) Instruction Converter</div><div class='awam-subtitle'>Extract Shipping Instructions from PDF/Excel/Word files directly into standardized dispatch tables.</div></div>", unsafe_allow_html=True)
+    st.info("Upload shipping documents to extract container details, Shipper, Consignee, and HS Codes.")
 
-    # 1. Upload Section
-    st.subheader("1. Upload Shipper Instructions")
-    uploaded_file = st.file_uploader("Upload Instructions File (PDF, TXT, CSV, XLSX)", type=["pdf", "txt", "csv", "xlsx"])
-    
-    if uploaded_file is not None:
-        extracted_text = extract_text_from_file(uploaded_file)
-        with st.expander("Preview Extracted Text", expanded=False):
-            st.text_area("Extracted Content:", extracted_text, height=150)
-
-    # 2. Booking Details
-    st.subheader("2. Booking & Transport Details")
-    col_b1, col_b2, col_b3 = st.columns(3)
-    with col_b1:
-        booking_no = st.text_input("BOOKING NO")
-        pol = st.text_input("POL (Port of Loading)")
-    with col_b2:
-        line = st.text_input("Shipping Line")
-        pod = st.text_input("POD (Port of Discharge)")
-    with col_b3:
-        vessel_voyage = st.text_input("Vessel & Voyage")
-        freight_terms = st.selectbox("Freight Terms", ["FREIGHT PREPAID", "FREIGHT COLLECT"])
-
-    booking_data = {
-        "booking_no": booking_no, "line": line, "vessel_voyage": vessel_voyage,
-        "pol": pol, "pod": pod, "freight_terms": freight_terms
-    }
-
-    # 3. Parties Details (Single Page Layout with Dynamic Copy from Consignee to Notify)
-    st.subheader("3. Parties Details")
-    col_p1, col_p2, col_p3 = st.columns(3, gap="medium")
-
-    with col_p1:
-        st.markdown("##### 🏢 Shipper Details")
-        s_name = st.text_input("Shipper Name", key="s_name")
-        s_addr = st.text_area("Shipper Address", key="s_addr", height=100)
-        s_tel = st.text_input("Shipper Tel", key="s_tel")
-        s_email = st.text_input("Shipper Email", key="s_email")
-        s_vat = st.text_input("Shipper VAT / Tax No", key="s_vat")
-
-    with col_p2:
-        st.markdown("##### 🏬 Consignee Details (CNEE)")
-        c_name = st.text_input("Consignee Name", key="c_name")
-        c_addr = st.text_area("Consignee Address", key="c_addr", height=100)
-        c_tel = st.text_input("Consignee Tel", key="c_tel")
-        c_email = st.text_input("Consignee Email", key="c_email")
-        c_vat = st.text_input("Consignee VAT / Tax No", key="c_vat")
-
-    with col_p3:
-        st.markdown("##### 🔔 Notify Party Details")
-        same_as_cnee = st.checkbox("Same as Consignee (CNEE)", key="same_as_cnee")
-        
-        if same_as_cnee:
-            n_name = st.text_input("Notify Name", value=c_name, key="n_name_dis", disabled=True)
-            n_addr = st.text_area("Notify Address", value=c_addr, key="n_addr_dis", height=100, disabled=True)
-            n_tel = st.text_input("Notify Tel", value=c_tel, key="n_tel_dis", disabled=True)
-            n_email = st.text_input("Notify Email", value=c_email, key="n_email_dis", disabled=True)
-            n_vat = st.text_input("Notify VAT / Tax No", value=c_vat, key="n_vat_dis", disabled=True)
-        else:
-            n_name = st.text_input("Notify Name", key="n_name")
-            n_addr = st.text_area("Notify Address", key="n_addr", height=100)
-            n_tel = st.text_input("Notify Tel", key="n_tel")
-            n_email = st.text_input("Notify Email", key="n_email")
-            n_vat = st.text_input("Notify VAT / Tax No", key="n_vat")
-
-    shipper_data = {"name": s_name, "address": s_addr, "tel": s_tel, "email": s_email, "vat_no": s_vat}
-    cnee_data = {"name": c_name, "address": c_addr, "tel": c_tel, "email": c_email, "vat_no": c_vat}
-    notify_data = {"name": n_name, "address": n_addr, "tel": n_tel, "email": n_email, "vat_no": n_vat}
-
-    # 4. Containers Details Table with Summary Bar
-    st.subheader("4. Containers & Cargo Details")
-    
-    if 'containers_data' not in st.session_state:
-        st.session_state.containers_data = pd.DataFrame([
-            {"Container No": "", "Seal No": "", "HS Code / Type": "40' HC", "Packages": "", "Description": "", "Gross Weight (KG)": 0.0, "Volume (CBM)": 0.0}
-        ])
-
-    edited_df = st.data_editor(
-        st.session_state.containers_data,
-        num_rows="dynamic",
-        use_container_width=True,
-        column_config={
-            "Container No": st.column_config.TextColumn("Container No", required=True, width="medium"),
-            "Seal No": st.column_config.TextColumn("Seal No", width="small"),
-            "HS Code / Type": st.column_config.TextColumn("HS Code / Type", width="medium"),
-            "Packages": st.column_config.TextColumn("Packages", width="small"),
-            "Description": st.column_config.TextColumn("Description", width="large"),
-            "Gross Weight (KG)": st.column_config.NumberColumn("Gross Weight (KG)", format="%.2f", width="medium"),
-            "Volume (CBM)": st.column_config.NumberColumn("Volume (CBM)", format="%.2f", width="medium")
-        },
-        key="container_editor"
-    )
-
-    # Calculate UI Totals
-    total_containers = len(edited_df)
-    total_gw = pd.to_numeric(edited_df["Gross Weight (KG)"], errors='coerce').sum()
-    total_cbm = pd.to_numeric(edited_df["Volume (CBM)"], errors='coerce').sum()
-
-    # Display Summary Bar Below Table
-    st.markdown("**Summary Totals:**")
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Total Containers", f"{total_containers}")
-    m2.metric("Total Gross Weight", f"{total_gw:,.2f} KG")
-    m3.metric("Total Volume", f"{total_cbm:,.2f} CBM")
-
-    st.markdown("---")
-    
-    # 5. Generate and Download
-    if st.button("Generate Formatted Excel File", type="primary"):
-        excel_file = generate_bl_excel(booking_data, shipper_data, cnee_data, notify_data, edited_df)
-        file_filename = f"Shipping_Instruction_{booking_no if booking_no else 'Awam'}.xlsx"
-        
-        st.download_button(
-            label="📥 Download Excel File",
-            data=excel_file,
-            file_name=file_filename,
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-
-# ==============================================================================
 # MODULE 3: COMPANY DIRECTORY
-# ==============================================================================
 elif selected_tool == "🏢 Registered Companies Directory":
     st.markdown("<div class='awam-header'><div class='awam-title'>🏢 Company Directory Engine (Awam Directory)</div><div class='awam-subtitle'>Manage and register Shippers, Consignees, Shipping Lines, and Subcontractors.</div></div>", unsafe_allow_html=True)
     tab1, tab2 = st.tabs(["➕ Register New Company", "📋 Registered Directory Ledger"])
@@ -675,9 +402,7 @@ elif selected_tool == "🏢 Registered Companies Directory":
             df = pd.DataFrame(st.session_state.companies)
             st.dataframe(df, use_container_width=True)
 
-# ==============================================================================
-# MODULE 4: INVOICE ENGINE
-# ==============================================================================
+# MODULE 4: INVOICE ENGINE (DYNAMIC INVOICE NUM & BANK DEFAULT & BLANK CONTAINERS)
 elif selected_tool == "🧾 Awam Invoice Engine":
     st.markdown("<div class='awam-header'><div class='awam-title'>🧾 Awam Financial Invoice Engine</div><div class='awam-subtitle'>Generate professional freight billing PDFs aligned with Awam Logistics corporate standards.</div></div>", unsafe_allow_html=True)
 
