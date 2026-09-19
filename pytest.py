@@ -30,7 +30,7 @@ client = get_openai_client()
 MASTER_HARDWARE_UUID = "42BE9A82-E4F0-506E-B41F-FEF4F0BE2FA7"
 MASTER_DEVICE_TOKEN = "AWAM-GHAMDAN-MAC-PRO-42BE9A82"
 
-# High-Performance Light Corporate Theme System
+# High-Performance Light Corporate Theme System & Modern Sidebar CSS
 st.markdown("""
 <style>
     html, body, .stApp, [data-testid="stAppViewContainer"] {
@@ -38,19 +38,104 @@ st.markdown("""
         color: #0F172A !important;
         font-family: 'Inter', -apple-system, sans-serif !important;
     }
+    
+    /* --- SIDEBAR CUSTOMIZATION --- */
     [data-testid="stSidebar"] {
         background-color: #FFFFFF !important;
         border-right: 1px solid #E2E8F0 !important;
+        padding-top: 10px !important;
     }
+    
+    /* Brand Header Box */
     .brand-box {
         background: linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);
-        border-radius: 8px;
-        padding: 16px;
+        border-radius: 10px;
+        padding: 20px 15px;
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 12px rgba(10, 25, 47, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    .brand-title { font-size: 18px; font-weight: 800; color: #FFFFFF !important; margin: 0; letter-spacing: 0.5px; }
-    .brand-sub { font-size: 10px; color: #93C5FD !important; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
+    .brand-title { 
+        font-size: 19px; 
+        font-weight: 800; 
+        color: #FFFFFF !important; 
+        margin: 0; 
+        letter-spacing: 0.8px; 
+    }
+    .brand-sub { 
+        font-size: 10px; 
+        color: #93C5FD !important; 
+        font-weight: 600; 
+        text-transform: uppercase; 
+        margin-top: 6px; 
+        letter-spacing: 1px;
+    }
+
+    /* Hide Radio Label Headers & Standard Radio Dots */
+    .stRadio > label { display: none !important; }
+    .stRadio div[role="radiogroup"] {
+        gap: 8px !important;
+    }
+    
+    /* Transform Radio Options into Sleek Interactive Cards */
+    .stRadio div[role="radiogroup"] > label {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 8px !important;
+        padding: 12px 14px !important;
+        color: #334155 !important;
+        font-weight: 600 !important;
+        font-size: 13.5px !important;
+        width: 100% !important;
+        margin-bottom: 0px !important;
+        transition: all 0.25s ease-in-out !important;
+        cursor: pointer !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
+    }
+    
+    /* Hover Effect */
+    .stRadio div[role="radiogroup"] > label:hover {
+        background-color: #F8FAFC !important;
+        border-color: #CBD5E1 !important;
+        transform: translateX(3px);
+        color: #1D4ED8 !important;
+    }
+    
+    /* Active Selected Item Styling */
+    .stRadio div[role="radiogroup"] > label[data-checked="true"] {
+        background: #EFF6FF !important;
+        color: #1D4ED8 !important;
+        border: 1px solid #BFDBFE !important;
+        border-left: 5px solid #1D4ED8 !important;
+        font-weight: 700 !important;
+        box-shadow: 0 2px 6px rgba(29, 78, 216, 0.08) !important;
+    }
+    .stRadio div[role="radiogroup"] > label[data-checked="true"] * { 
+        color: #1D4ED8 !important; 
+    }
+    
+    /* Sidebar Footer Status Indicator */
+    .sidebar-footer {
+        margin-top: 40px;
+        padding: 12px;
+        background-color: #F8FAFC;
+        border-radius: 8px;
+        border: 1px solid #E2E8F0;
+        text-align: center;
+        font-size: 11px;
+        color: #64748B;
+    }
+    .status-dot {
+        height: 8px;
+        width: 8px;
+        background-color: #10B981;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+    }
+
+    /* Main UI Headers & Inputs */
     .awam-header { 
         background-color: #FFFFFF !important; 
         border: 1px solid #E2E8F0 !important; 
@@ -77,15 +162,6 @@ st.markdown("""
         border: none !important;
         padding: 8px 20px !important;
     }
-    .stRadio > label { display: none !important; }
-    .stRadio div[role="radiogroup"] > label {
-        background: #F1F5F9 !important; border: 1px solid #E2E8F0 !important; border-radius: 6px !important;
-        padding: 10px !important; color: #334155 !important; font-weight: 600 !important; width: 100% !important; margin-bottom: 6px !important;
-    }
-    .stRadio div[role="radiogroup"] > label[data-checked="true"] {
-        background: #1D4ED8 !important; color: #FFFFFF !important; border-color: #1D4ED8 !important;
-    }
-    .stRadio div[role="radiogroup"] > label[data-checked="true"] * { color: #FFFFFF !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -149,7 +225,7 @@ def sanitize_text(val):
         val_str = val_str.replace(search, replace)
     return val_str
 
-# PDF Invoice Generation Engine (UPDATED: Horizontal Containers Layout)
+# PDF Invoice Generation Engine
 def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, container_numbers="", bank_details="", tax_amount=0.0, logo_path="AG-LOGO.png"):
     from reportlab.lib.pagesizes import letter
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
@@ -196,7 +272,6 @@ def build_pdf_invoice(invoice_num, invoice_date, customer_info, items_data, cont
     story.append(Table([[cust_table, '', inv_table]], colWidths=[255, 30, 255], style=[('VALIGN', (0, 0), (-1, -1), 'TOP')]))
     story.append(Spacer(1, 12))
 
-    # Dynamic Horizontal Formatting for Containers (Split multi-lines into comma-separated inline text)
     if container_numbers.strip():
         raw_lines = [line.strip() for line in container_numbers.strip().splitlines() if line.strip()]
         horizontal_containers = ", ".join(raw_lines)
@@ -427,7 +502,7 @@ def generate_bl_excel(booking_data, shipper_data, cnee_data, notify_data, contai
         c.fill = section_fill
         c.border = thin_border
 
-    # Adjust Column Widths (Enlarged Description Column to 60)
+    # Adjust Column Widths
     col_widths = {1: 20, 2: 16, 3: 18, 4: 15, 5: 60, 6: 20, 7: 16}
     for col_idx, width in col_widths.items():
         ws.column_dimensions[get_column_letter(col_idx)].width = width
@@ -437,15 +512,23 @@ def generate_bl_excel(booking_data, shipper_data, cnee_data, notify_data, contai
     output.seek(0)
     return output
 
-# Navigation System
+# Enhanced Navigation System in Sidebar
 with st.sidebar:
     st.markdown("<div class='brand-box'><div class='brand-title'>AWAM LOGISTICS</div><div class='brand-sub'>Freight Forwarding Suite</div></div>", unsafe_allow_html=True)
+    
     selected_tool = st.radio("Navigation", [
         "⚡ Quick RFQ Standardization Tool",
         "📜 B/L Instruction Converter",
         "🏢 Registered Companies Directory",
         "🧾 Awam Invoice Engine"
     ])
+    
+    st.markdown("""
+    <div class='sidebar-footer'>
+        <span class='status-dot'></span>System Operational<br>
+        <span style='font-size: 9px; color: #94A3B8;'>v2.4 | agstic.com</span>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ==============================================================================
 # MODULE 1: QUICK RFQ STANDARDIZATION TOOL
@@ -552,7 +635,7 @@ elif selected_tool == "📜 B/L Instruction Converter":
         "pol": pol, "pod": pod, "freight_terms": freight_terms
     }
 
-    # 3. Parties Details (Single Page Layout with Dynamic Copy from Consignee to Notify)
+    # 3. Parties Details
     st.subheader("3. Parties Details")
     col_p1, col_p2, col_p3 = st.columns(3, gap="medium")
 
